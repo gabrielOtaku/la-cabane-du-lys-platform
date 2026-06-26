@@ -1,0 +1,31 @@
+# Dépendances
+node_modules/
+.pnp/
+.yarn/
+
+# Builds
+.next/
+out/
+dist/
+target/
+build/
+
+# Env
+.env
+.env.local
+.env*.local
+application-local.yml
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+*.iml
+
+# Divers
+coverage/
+.turbo/

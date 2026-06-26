@@ -1,0 +1,65 @@
+version: '3.8'
+
+# ============================================================
+#  LA CABANE DU LYS — Orchestration locale
+#  Lance : PostgreSQL, Redis, le backend Spring Boot, le frontend Next.js
+#  Usage  : docker compose up --build -d
+# ============================================================
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: cabane-db
+    environment:
+      POSTGRES_DB: cabanedulys
+      POSTGRES_USER: cabane
+      POSTGRES_PASSWORD: change_me_in_prod
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cabane -d cabanedulys"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: cabane-redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+
+  backend:
+    build: ./backend
+    container_name: cabane-backend
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_URL: jdbc:postgresql://db:5432/cabanedulys
+      DB_USER: cabane
+      DB_PASSWORD: change_me_in_prod
+      REDIS_HOST: redis
+      JWT_SECRET: dev-secret-please-override-with-32B-min
+      CORS_ORIGIN: http://localhost:3000
+      STRIPE_SECRET_KEY: sk_test_replace_me
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build: ./frontend
+    container_name: cabane-frontend
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8080/api
+    ports:
+      - "3000:3000"
+
+volumes:
+  db_data:
