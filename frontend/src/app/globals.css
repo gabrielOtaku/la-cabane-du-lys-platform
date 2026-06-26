@@ -412,6 +412,7 @@ section{padding:clamp(90px,12vh,160px) 0;position:relative}
   transition:border-color .3s var(--ease),color .3s var(--ease),background .3s var(--ease)}
 .salle-ctrl-btn:hover{border-color:var(--bronze);color:var(--bronze);background:rgba(212,175,55,.06)}
 .salle-stage{min-height:360px;position:relative;overflow:hidden}
+.salle-stage--delayed{transition-delay:.1s}
 .salle-slide{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,4vw,48px);
   background:rgba(20,18,14,.45);border:1px solid rgba(60,54,44,.55);
   border-radius:12px;padding:clamp(26px,4vw,52px);backdrop-filter:blur(12px);

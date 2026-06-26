@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Lys } from "@/components/ui/Lys";
 import { ScrollLink } from "@/components/ui/ScrollLink";
+import { MagneticButton } from "@/components/ui/MagneticButton";
 
 const NAV = [
   { href: "#manifeste", label: "Le Manifeste" },
@@ -39,7 +40,7 @@ export function Header() {
         <nav className="links">
           {NAV.map((n) => <ScrollLink key={n.href} to={n.href}>{n.label}</ScrollLink>)}
         </nav>
-        <ScrollLink to="#cercle" className="btn btn-ghost nav-cta">Le Cercle</ScrollLink>
+        <MagneticButton><ScrollLink to="#cercle" className="btn btn-ghost nav-cta">Le Cercle</ScrollLink></MagneticButton>
         <button className={`burger${open ? " open" : ""}`} aria-label="Menu" onClick={() => setOpen((v) => !v)}>
           <span /><span /><span />
         </button>

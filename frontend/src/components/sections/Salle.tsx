@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useGuests } from "@/lib/queries";
 import { guests as mockGuests } from "@/data/guests";
 import { sectorLabel } from "@/components/ui/RelicIcon";
+import { MagneticButton } from "@/components/ui/MagneticButton";
 
 const slideVariants = {
   enter: (dir: number) => ({
@@ -36,7 +37,7 @@ const slideVariants = {
 
 export function Salle() {
   const { data } = useGuests();
-  const list = data ?? mockGuests;
+  const list = (data && data.length > 0) ? data : mockGuests;
   const [idx, setIdx] = useState(0);
   const [dir, setDir] = useState(0);
 
@@ -44,6 +45,7 @@ export function Salle() {
   const prev = () => { setDir(-1); setIdx((i) => (i - 1 + list.length) % list.length); };
 
   const g = list[idx];
+  if (!g) return null;
 
   return (
     <section id="salle" className="salle">
@@ -61,17 +63,17 @@ export function Salle() {
               {String(list.length).padStart(2, "0")}
             </span>
             <div className="salle-ctrl-btns">
-              <button className="salle-ctrl-btn" onClick={prev} aria-label="Invité précédent">
+              <button type="button" className="salle-ctrl-btn" onClick={prev} aria-label="Invité précédent">
                 <ArrowLeft size={16} />
               </button>
-              <button className="salle-ctrl-btn" onClick={next} aria-label="Invité suivant">
+              <button type="button" className="salle-ctrl-btn" onClick={next} aria-label="Invité suivant">
                 <ArrowRight size={16} />
               </button>
             </div>
           </div>
         </div>
 
-        <div className="salle-stage" data-reveal style={{ transitionDelay: ".1s" }}>
+        <div className="salle-stage salle-stage--delayed" data-reveal>
           <AnimatePresence mode="wait" custom={dir}>
             <motion.div
               key={g.id}
@@ -115,9 +117,11 @@ export function Salle() {
                     </span>
                   </div>
                 </div>
-                <Link href="/hall-of-fame" className="salle-cta">
-                  Inspecter la Relique
-                </Link>
+                <MagneticButton style={{ display: "block" }}>
+                  <Link href="/hall-of-fame" className="salle-cta">
+                    Inspecter la Relique
+                  </Link>
+                </MagneticButton>
               </div>
             </motion.div>
           </AnimatePresence>

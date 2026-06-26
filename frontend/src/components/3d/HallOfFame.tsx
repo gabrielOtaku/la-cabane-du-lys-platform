@@ -1,8 +1,38 @@
 "use client";
 import { useRef, useEffect, useState } from "react";
 import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { OrbitControls }   from "three/examples/jsm/controls/OrbitControls.js";
+import { EffectComposer }  from "three/examples/jsm/postprocessing/EffectComposer.js";
+import { RenderPass }      from "three/examples/jsm/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
+import { ShaderPass }      from "three/examples/jsm/postprocessing/ShaderPass.js";
 import type { Guest, Sector } from "@/types";
+
+// ─── Vignette shader ─────────────────────────────────────────────────────────
+
+const vignetteShader = {
+  uniforms: {
+    tDiffuse: { value: null },
+    offset:   { value: 1.1 },
+    darkness: { value: 1.3 },
+  },
+  vertexShader: `
+    varying vec2 vUv;
+    void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
+  `,
+  fragmentShader: `
+    uniform sampler2D tDiffuse;
+    uniform float offset;
+    uniform float darkness;
+    varying vec2 vUv;
+    void main() {
+      vec4 color = texture2D(tDiffuse, vUv);
+      vec2 uv = (vUv - vec2(0.5)) * offset;
+      float vign = clamp(1.0 - dot(uv, uv) * darkness, 0.0, 1.0);
+      gl_FragColor = vec4(color.rgb * vign, color.a);
+    }
+  `,
+};
 
 // ─── Matériaux partagés ───────────────────────────────────────────────────────
 
@@ -11,8 +41,8 @@ function makeRelicMat() {
     color: new THREE.Color("#d4af37"),
     metalness: 0.9,
     roughness: 0.25,
-    emissive: new THREE.Color("#3a2a08"),
-    emissiveIntensity: 0.4,
+    emissive: new THREE.Color("#b8860b"),
+    emissiveIntensity: 1.2,
   });
 }
 
@@ -186,6 +216,14 @@ export function HallOfFame({ guests }: { guests: Guest[] }) {
     controls.autoRotateSpeed = 0.4;
     controls.enableDamping = true;
 
+    // ── Post-Processing ───────────────────────────────────────────────────────
+    const composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera));
+    const bloom = new UnrealBloomPass(new THREE.Vector2(W(), H()), 0.5, 0.4, 0.3);
+    composer.addPass(bloom);
+    const vgPass = new ShaderPass(vignetteShader);
+    composer.addPass(vgPass);
+
     // ── Raycaster (clics) ─────────────────────────────────────────────────────
     const raycaster = new THREE.Raycaster();
     const mouse     = new THREE.Vector2();
@@ -209,6 +247,7 @@ export function HallOfFame({ guests }: { guests: Guest[] }) {
       camera.aspect = W() / H();
       camera.updateProjectionMatrix();
       renderer.setSize(W(), H());
+      composer.setSize(W(), H());
     };
     window.addEventListener("resize", onResize);
 
@@ -237,7 +276,7 @@ export function HallOfFame({ guests }: { guests: Guest[] }) {
         relicGroup.scale.z  = relicGroup.scale.x;
       });
 
-      renderer.render(scene, camera);
+      composer.render();
 
       // Position de la fiche holographique
       if (holoRef.current) {
@@ -262,6 +301,7 @@ export function HallOfFame({ guests }: { guests: Guest[] }) {
       window.removeEventListener("resize", onResize);
       controls.dispose();
       relicMat.dispose();
+      composer.dispose();
       renderer.dispose();
     };
   }, [guests]);
