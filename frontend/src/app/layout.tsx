@@ -7,9 +7,10 @@ import { Preloader } from "@/components/layout/Preloader";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { CustomCursor } from "@/components/layout/CustomCursor";
+import { AnimatedMain } from "@/components/layout/AnimatedMain";
 import { LysDefs } from "@/components/ui/Lys";
 import { Toaster } from "@/components/ui/Toaster";
-import { EmberFieldWrapper } from "@/components/3d/EmberFieldWrapper"; // L'import propre
+import { EmberFieldWrapper } from "@/components/3d/EmberFieldWrapper";
 
 const serif = Fraunces({ subsets: ["latin"], variable: "--font-serif", display: "swap" });
 const sans = Manrope({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
@@ -37,7 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <EmberFieldWrapper />
           <CustomCursor />
           <Header />
-          <main>{children}</main>
+          <AnimatedMain>{children}</AnimatedMain>
           <Footer />
           <Toaster />
         </Providers>

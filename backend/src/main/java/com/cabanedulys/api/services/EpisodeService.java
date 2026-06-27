@@ -7,6 +7,7 @@ import com.cabanedulys.api.models.Episode;
 import com.cabanedulys.api.repositories.EpisodeRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -31,6 +32,10 @@ public class EpisodeService {
         return repo.findAllByOrderByNumberDesc().stream()
                 .map(e -> EpisodeDto.from(e, parseTranscript(e))).toList();
     }
+
+    /** À appeler après toute mutation (création, mise à jour, suppression d'épisode). */
+    @CacheEvict(value = "episodes", allEntries = true)
+    public void evictAll() {}
 
     public EpisodeDto findById(UUID id) {
         Episode e = repo.findById(id).orElseThrow(() -> new NotFoundException("Épisode introuvable : " + id));

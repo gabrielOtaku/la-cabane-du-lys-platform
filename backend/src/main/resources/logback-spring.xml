@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+  <!-- ─── Profil DEV : sortie console lisible avec couleurs ─────────────────── -->
+  <springProfile name="dev,default">
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+      <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+        <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) [%boldCyan(%X{traceId:-no-trace})] %cyan(%logger{36}) — %msg%n</pattern>
+      </encoder>
+    </appender>
+
+    <logger name="com.cabanedulys" level="DEBUG"/>
+    <logger name="org.hibernate.SQL"            level="WARN"/>
+    <logger name="org.springframework.security" level="INFO"/>
+
+    <root level="INFO">
+      <appender-ref ref="CONSOLE"/>
+    </root>
+  </springProfile>
+
+  <!-- ─── Profil DOCKER / PRODUCTION : JSON structuré (ELK / Datadog) ────────
+       Chaque ligne est un objet JSON avec @timestamp, level, traceId, spanId,
+       logger, message et tous les champs MDC injectés par Micrometer Tracing.   -->
+  <springProfile name="docker,prod">
+    <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+      <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+        <fieldNames>
+          <timestamp>@timestamp</timestamp>
+          <version>[ignore]</version>
+          <levelValue>[ignore]</levelValue>
+        </fieldNames>
+        <!-- Injecte traceId + spanId depuis le MDC de Micrometer Tracing -->
+        <includeMdcKeyName>traceId</includeMdcKeyName>
+        <includeMdcKeyName>spanId</includeMdcKeyName>
+      </encoder>
+    </appender>
+
+    <root level="INFO">
+      <appender-ref ref="JSON"/>
+    </root>
+  </springProfile>
+
+</configuration>

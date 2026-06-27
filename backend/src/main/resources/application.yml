@@ -22,6 +22,9 @@ spring:
       port: ${REDIS_PORT:6379}
   cache:
     type: simple                 # Dev : cache mémoire. Surchargé en Redis sous Docker.
+  mvc:
+    problemdetails:
+      enabled: true   # RFC 7807 — réponses d'erreur standardisées
 
 server:
   port: 8080
@@ -45,10 +48,26 @@ app:
     secret-key: ${STRIPE_SECRET_KEY:sk_test_replace_me}
     webhook-secret: ${STRIPE_WEBHOOK_SECRET:whsec_replace_me}
   base-url: ${BASE_URL:http://localhost:3000}
+  rate-limit:
+    max-requests: 5       # requêtes max par fenêtre par IP
+    window-seconds: 60    # durée de la fenêtre en secondes
 
 logging:
   level:
     org.springframework.security: INFO
+
+# Observabilité
+management:
+  tracing:
+    sampling:
+      probability: 1.0   # 100 % en dev ; mettre à 0.1 en production
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
 
 ---
 # Profil exécuté dans Docker Compose
