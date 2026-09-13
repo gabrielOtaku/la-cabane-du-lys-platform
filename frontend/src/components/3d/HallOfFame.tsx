@@ -176,7 +176,7 @@ export function HallOfFame({ guests }: { guests: Guest[] }) {
 
       // Relique flottante
       const relicGroup = new THREE.Group();
-      const relic = buildRelic(guest.sector, relicMat);
+      const relic = buildRelic(guest.sector ?? "agroalimentaire", relicMat);
       relicGroup.add(relic);
       group.add(relicGroup);
 
@@ -321,14 +321,10 @@ export function HallOfFame({ guests }: { guests: Guest[] }) {
           className="holo-card"
           style={{ position: "absolute", top: 0, left: 0, opacity: 0, pointerEvents: "none" }}
         >
-          <span className="holo-sector">{activeGuest.sector}</span>
+          <span className="holo-sector">{activeGuest.category}</span>
           <h3>{activeGuest.name}</h3>
           <p className="holo-role">{activeGuest.role} · {activeGuest.company}</p>
-          <div className="holo-stats">
-            <span><b>{activeGuest.revenue}</b>Chiffre d&apos;affaires</span>
-            <span><b>{activeGuest.employees}</b>Employés</span>
-          </div>
-          <p className="holo-lesson">« {activeGuest.lesson} »</p>
+          {activeGuest.angle && <p className="holo-lesson">{activeGuest.angle}</p>}
         </div>
       )}
     </div>

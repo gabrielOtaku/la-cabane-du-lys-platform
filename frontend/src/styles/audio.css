@@ -1,0 +1,213 @@
+/* ============================================================
+   AUDIO — moteur partagé, lecteur complet, mini lecteur (phase 3).
+   La « braise » vit dans la waveform, le playhead et la progression, jamais autour de la carte.
+============================================================ */
+
+/* ---------- barre de progression accessible ---------- */
+.progress-hit {
+  flex: 1;
+  padding: 10px 0;
+  margin: -10px 0;
+  cursor: pointer;
+  touch-action: none;
+  border-radius: 6px;
+}
+.progress-hit[aria-disabled="true"] {
+  cursor: default;
+  opacity: 0.5;
+}
+.progress-hit:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+.progress-hit .progress {
+  transition: height var(--motion-fast) var(--ease-standard);
+}
+.progress-hit:hover .progress,
+.progress-hit:focus-visible .progress {
+  height: 5px;
+}
+
+/* ---------- messages d'état ---------- */
+.player-note {
+  margin-top: 10px;
+  font-size: 0.78rem;
+  color: var(--smoke);
+  letter-spacing: 0.02em;
+}
+.player-note.error {
+  color: var(--ember);
+}
+.play-btn[disabled] {
+  cursor: not-allowed;
+  filter: saturate(0.4);
+  opacity: 0.7;
+  transform: none;
+}
+
+/* ---------- transcription navigable ---------- */
+.tlines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.tline-btn {
+  all: unset;
+  display: block;
+  width: 100%;
+  cursor: pointer;
+  box-sizing: border-box;
+  border-radius: 4px;
+}
+.tline-btn:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 4px;
+}
+.tline-btn[disabled] {
+  cursor: default;
+}
+.tline-time {
+  display: inline-block;
+  min-width: 3.2em;
+  font-family: var(--sans);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: var(--bronze-3);
+  font-variant-numeric: tabular-nums;
+}
+.tline.active .tline-time {
+  color: var(--bronze);
+}
+/* Marque verticale bronze : la phrase active ne dépend pas que de la couleur */
+.tline.active {
+  border-left: 2px solid var(--bronze);
+  padding-left: 12px;
+}
+.tline.active::before {
+  display: none;
+}
+
+/* ---------- mini lecteur persistant ---------- */
+.mini-player {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 1200;
+  width: min(760px, calc(100vw - 32px));
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 10px 12px 10px 12px;
+  border-radius: 16px;
+  background: rgba(15, 13, 10, 0.62);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 24px 60px -20px rgba(0, 0, 0, 0.75);
+  animation: mini-player-in var(--motion-standard) var(--ease-standard);
+}
+@keyframes mini-player-in {
+  from { opacity: 0; transform: translate(-50%, 12px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+.mini-player .mp-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--bronze);
+  background: var(--grad-bronze);
+  color: #1a1206;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform var(--motion-fast) var(--ease-standard);
+}
+.mini-player .mp-btn:hover:not([disabled]) {
+  transform: scale(1.06);
+}
+.mini-player .mp-btn[disabled] {
+  cursor: not-allowed;
+  filter: saturate(0.4);
+  opacity: 0.7;
+}
+.mini-player .mp-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.mini-player .mp-title {
+  font-family: var(--serif);
+  font-size: 0.98rem;
+  color: var(--cream);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mini-player .mp-title:hover {
+  color: var(--gold);
+}
+.mini-player .mp-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mini-player .time {
+  font-size: 0.7rem;
+}
+.mini-player .mp-sub {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: var(--smoke);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mini-player .mp-sub.error {
+  color: var(--ember);
+}
+.mini-player .mp-close {
+  background: none;
+  border: none;
+  color: var(--smoke);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: color var(--motion-fast), background var(--motion-fast);
+}
+.mini-player .mp-close:hover {
+  color: var(--cream);
+  background: rgba(255, 255, 255, 0.06);
+}
+@media (max-width: 640px) {
+  .mini-player {
+    bottom: 12px;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 8px 10px;
+  }
+  .mini-player .mp-sub {
+    display: none;
+  }
+}
+
+/* ---------- mouvement réduit ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .wave i {
+    transition: none;
+  }
+  .sparks-wrap {
+    display: none;
+  }
+  .player-tag .dot {
+    animation: none;
+  }
+  .mini-player {
+    animation: none;
+  }
+}

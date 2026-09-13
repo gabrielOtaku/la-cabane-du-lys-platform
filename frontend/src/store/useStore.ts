@@ -1,13 +1,13 @@
 "use client";
 import { create } from "zustand";
 
+/**
+ * État client transversal uniquement (feuille de route, §4) : ce qui n'appartient pas au serveur.
+ * La session vit dans TanStack Query (voir lib/auth.ts), jamais ici.
+ */
 interface CartItem { productId: string; qty: number; }
 
 interface AppState {
-  // Session (Cercle privé)
-  member: { email: string } | null;
-  setMember: (m: { email: string } | null) => void;
-
   // Panier (La Réserve)
   cart: CartItem[];
   addToCart: (productId: string) => void;
@@ -19,9 +19,6 @@ interface AppState {
 }
 
 export const useStore = create<AppState>((set) => ({
-  member: null,
-  setMember: (member) => set({ member }),
-
   cart: [],
   addToCart: (productId) =>
     set((s) => {

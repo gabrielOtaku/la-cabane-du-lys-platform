@@ -20,6 +20,10 @@ public class Order {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "drop_id")
+    private Drop drop;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
@@ -29,7 +33,7 @@ public class Order {
     @Builder.Default
     private long totalCents = 0;
 
-    /** Référence Stripe (PaymentIntent / Checkout Session). */
+    /** Référence Stripe (Checkout Session). */
     private String stripeReference;
 
     @Column(nullable = false)

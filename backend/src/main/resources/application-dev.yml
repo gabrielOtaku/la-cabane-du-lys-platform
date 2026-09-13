@@ -1,6 +1,7 @@
 # ============================================================
 #  Profil DEV — Lancer sans Docker : mvn spring-boot:run -Dspring-boot.run.profiles=dev
 #  Base H2 en mémoire (schéma créé par JPA), Redis toléré absent.
+#  Sans Redis : rate limiting et révocation de session en fail-open, passkeys indisponibles.
 # ============================================================
 spring:
   datasource:
@@ -28,6 +29,14 @@ spring:
       timeout: 200ms
   cache:
     type: simple
+
+app:
+  session:
+    cookie-secure: false     # http://localhost — le cookie serait ignoré avec Secure
+  mail:
+    mode: log                # le lien magique est écrit dans la console
+  features:
+    magic-link-enabled: true
 
 logging:
   level:

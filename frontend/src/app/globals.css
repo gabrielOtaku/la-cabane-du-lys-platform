@@ -423,15 +423,9 @@ section {
 }
 
 /* ============================================================
-   CUSTOM CURSOR — masque le curseur OS sur les appareils à souris
+   CUSTOM CURSOR — voir src/styles/cursor.css : le curseur OS n'est masqué
+   que lorsque le composant CustomCursor est actif (html.custom-cursor).
 ============================================================ */
-@media (hover: hover) and (pointer: fine) {
-  *,
-  *::before,
-  *::after {
-    cursor: none !important;
-  }
-}
 
 /* ============================================================
    LOADER  (le lys s'épanouit)

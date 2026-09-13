@@ -47,7 +47,11 @@ services:
       REDIS_HOST: redis
       JWT_SECRET: dev-secret-please-override-with-32B-min
       CORS_ORIGIN: http://localhost:3000
+      BASE_URL: http://localhost:3000
+      SESSION_COOKIE_SECURE: "false"      # http://localhost — mettre true derrière HTTPS
+      MAIL_MODE: log                      # le lien magique s'affiche dans `docker compose logs backend`
       STRIPE_SECRET_KEY: sk_test_replace_me
+      STRIPE_WEBHOOK_SECRET: whsec_replace_me
     ports:
       - "8080:8080"
 
@@ -58,6 +62,7 @@ services:
       - backend
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8080/api
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
     ports:
       - "3000:3000"
 

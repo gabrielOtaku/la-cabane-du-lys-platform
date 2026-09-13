@@ -1,9 +1,10 @@
 # La Cabane du Lys — Plateforme
 
-> Écosystème médiatique & e-commerce haut de gamme dédié à la réalité brute de l'entrepreneuriat.
-> Direction artistique : **« Luxe Sombre & Immersif »** — Obsidienne · Bronze Brossé · Ambre.
+> Maison éditoriale entrepreneuriale francophone, née au Cégep de Saint-Félicien.
+> Direction artistique : **Obsidienne · Bronze · Ambre** — le feu, la voix et la fleur de lys.
 
-Monorepo conforme au *Cahier des charges fonctionnel & technique v1.0*.
+Monorepo piloté par la *Feuille de route technique et créative* (13 septembre 2026).
+Suivi d'avancement : [docs/ROADMAP_STATUS.md](docs/ROADMAP_STATUS.md). Variables : [docs/ENVIRONNEMENT.md](docs/ENVIRONNEMENT.md).
 
 ---
 
@@ -11,41 +12,47 @@ Monorepo conforme au *Cahier des charges fonctionnel & technique v1.0*.
 
 ```
 la-cabane-du-lys-platform/
-├── frontend/   → Next.js 14 (App Router) · React · TypeScript · Tailwind · R3F · Framer Motion · Lenis
-└── backend/    → Java 21 · Spring Boot 3 · Spring Security (JWT + WebAuthn) · JPA · Flyway · PostgreSQL · Redis · Stripe
+├── frontend/   → Next.js 15.5 (App Router) · React 18.3 · TypeScript 5.5 · TanStack Query 5 · Zustand · Framer Motion · Lenis · R3F
+├── backend/    → Java 21 · Spring Boot 3.2.5 · Spring Security · JPA/Hibernate · Flyway · PostgreSQL 16 · Redis 7 · Stripe · WebAuthn4J
+└── docs/       → environnement, backlog, décisions
 ```
 
-| Couche | Pile |
+| Couche | Pile réelle (package.json / pom.xml) |
 | --- | --- |
-| **Front-end** | Next.js 14, React 18, TypeScript, Tailwind CSS, Shadcn/UI, Framer Motion, Lenis, Three.js + React Three Fiber + Drei, Zustand, TanStack Query |
-| **Back-end** | Java 21, Spring Boot 3.2, Spring Security, WebAuthn (Passkeys), JWT, Spring Data JPA / Hibernate, Flyway |
-| **Données / Infra** | PostgreSQL 16, Redis 7, Stripe API, Docker, Cloudflare (WAF/CDN), AWS/GCP |
+| **Front-end** | Next.js 15.5.19, React 18.3.1, TypeScript 5.5.3, Tailwind 3.4, Framer Motion 11, Lenis 1.1, Three 0.166 + React Three Fiber 8 + Drei 9, Zustand 4.5, TanStack Query 5.51, lucide-react |
+| **Back-end** | Java 21 (Temurin), Spring Boot 3.2.5, Spring Security 6, JJWT 0.12, WebAuthn4J 0.22, Spring Data JPA, Flyway, Stripe Java 25.12, Spring Mail |
+| **Données / Infra** | PostgreSQL 16, Redis 7, Docker Compose, Testcontainers (tests d'intégration), H2 (profil dev) |
+
+> Le Dockerfile du backend cible encore Temurin 25 : à aligner sur 21 avant tout déploiement (backlog P1).
 
 ---
 
-## Démarrage rapide (tout en conteneurs)
+## Démarrage rapide
 
-Prérequis : **Docker** + **Docker Compose**.
+### Tout en conteneurs
+
+Prérequis : Docker + Docker Compose.
 
 ```bash
 cp .env.example .env        # ajustez les secrets
 docker compose up --build
 ```
 
-- Frontend : http://localhost:3000
-- API : http://localhost:8080/api
-- PostgreSQL : `localhost:5432` · Redis : `localhost:6379`
+- Site : http://localhost:3000 · API : http://localhost:8080/api · PostgreSQL `localhost:5432` · Redis `localhost:6379`
 
-## Démarrage en développement (sans Docker)
+### Développement sans Docker
 
-### Backend
+**Backend** (JDK 21 + Maven 3.9) — base H2 en mémoire, Redis toléré absent :
+
 ```bash
 cd backend
-# Lance Postgres + Redis localement (ou : docker compose up db redis)
-mvn spring-boot:run          # nécessite JDK 21 + Maven, ou utilisez Docker
+mvn spring-boot:run        # profil dev activé par le plugin
 ```
 
-### Frontend
+Sans Redis : le rate limiting et la révocation de session sont en *fail-open* (documenté), les passkeys sont indisponibles. Le lien magique est écrit dans la console (`MAIL_MODE=log`).
+
+**Frontend** :
+
 ```bash
 cd frontend
 cp .env.local.example .env.local
@@ -53,33 +60,63 @@ npm install
 npm run dev
 ```
 
+**Stripe en local** (webhooks) :
+
+```bash
+stripe listen --forward-to localhost:8080/api/shop/webhook
+# copier le secret whsec_… affiché dans STRIPE_WEBHOOK_SECRET, puis relancer le backend
+stripe trigger checkout.session.completed
+```
+
+### Vérifications
+
+```bash
+# backend : tests unitaires + flux d'authentification + boutique (H2)
+cd backend && mvn test -Dtest='!EpisodeServiceIT'
+# backend : test d'intégration PostgreSQL réel (Docker requis)
+cd backend && mvn test -Dtest=EpisodeServiceIT
+# frontend
+cd frontend && npm run typecheck && npm run lint && npm run build
+```
+
 ---
 
-## Modules livrés
+## Ce qui est en place (V2, phases 0 à 4)
 
-| Page / Module | Route | État |
+| Domaine | État | Détail |
 | --- | --- | --- |
-| L'Édifice (accueil) | `/` | ✅ Expérience immersive complète |
-| Le Coffre (lecteur + transcription) | `/episodes/[id]` | ✅ Lecteur sur-mesure (recherche sémantique = à brancher) |
-| La Salle des Trophées (3D) | `/hall-of-fame` | ✅ Scène WebGL R3F navigable |
-| Le Cercle (auth passwordless) | `/login` | ✅ UI + hook WebAuthn (ceremony serveur = à finaliser) |
-| La Réserve (drop éphémère) | `/drop` | ✅ Compte à rebours + vitrine (paiement Stripe = à brancher) |
+| Identité | ✅ | Lien magique à usage unique (SHA-256 en base, 15 min, un seul clic), session en cookie **HttpOnly · Secure · SameSite=Lax**, révocation à la déconnexion, rôle lu et validé depuis le jeton, `/admin/**` réservé au rôle ADMIN, 401/403 en JSON RFC 7807, protection CSRF par vérification d'origine. |
+| Passkeys | ✅ | Enregistrement réservé à une session ouverte (adresse vérifiée) ; connexion sans courriel (credential discoverable), aucune énumération de comptes. |
+| Boutique | ✅ | Entité `Drop` (dates persistées, cycle de vie DRAFT/PUBLISHED/ARCHIVED, état SCHEDULED/OPEN/CLOSED dérivé), réservation de stock transactionnelle avec verrou de ligne avant Stripe, limite par client, expiration automatique, webhooks idempotents, montant vérifié côté serveur. |
+| Audio | ✅ | Moteur unique (`features/audio`) : un seul élément audio, analyse fréquentielle réelle, lecture persistante pendant la navigation, mini lecteur, transcription synchronisée navigable, clavier et mouvement réduit. |
+| Identité interactive | ✅ | Curseur fleur de lys (symbole SVG partagé, 16 px), modes lien/bouton/texte/lecture/3D, lucioles au clic (6 à 9, 400 à 800 ms) avec variante Play ; désactivé sur tactile et mouvement réduit. |
+| Accueil | 🔶 | Hero V2 recentré (proposition, appel principal, appel secondaire) et bandeau de preuves réelles. Tokens de mouvement posés. Système culturel et guide DA à compléter (phase 5). |
+| Données | 🔶 | API source de vérité ; fixtures locales limitées au développement ; états Skeleton/Erreur/Vide réutilisables. Découpage complet de `globals.css` à poursuivre (phase 6). |
+| Back office | ⏳ | `GET /admin/overview` (compteurs) seulement. Édition des contenus et des drops : phase 7. |
 
-> Les contenus (épisodes, invités, dates de drop) sont des **données de démonstration** dans
-> `frontend/src/data/`. Le backend expose déjà les endpoints REST correspondants — il suffit de
-> connecter le frontend à l'API via `NEXT_PUBLIC_API_URL` et de remplir la base.
+Routes publiques : `/`, `/episodes`, `/episodes/[slug]`, `/invites`, `/invites/[slug]`, `/a-propos`, `/participer`, `/contact`, `/login`, `/login/callback`, `/drop`, `/drop/success`, `/hall-of-fame`.
 
-## Sécurité (stratégie « Zero Trust »)
+## API (résumé)
 
-- **Passwordless / WebAuthn** : `useWebAuthn` côté front + `WebAuthnConfig`/`AuthController` côté back (squelette de ceremony fourni).
-- **JWT** : `JwtService` + `JwtAuthenticationFilter` pour les sessions API.
-- **Chiffrement** : TLS 1.3 en transit, AES-256 au repos (config base) — à activer en production.
-- **Périmètre** : WAF + protection DDoS via Cloudflare (hors code applicatif).
+| Méthode | Route | Accès | Rôle |
+| --- | --- | --- | --- |
+| POST | `/auth/magic-link` | public (5/min/IP) | Demande un lien ; réponse identique quelle que soit l'adresse |
+| POST | `/auth/magic-link/verify` | public | Consomme le lien, pose le cookie de session |
+| GET / POST | `/auth/me` · `/auth/logout` | session | Session courante · fermeture + révocation |
+| POST | `/auth/webauthn/register/*` | session | Ajout d'une passkey au compte vérifié |
+| POST | `/auth/webauthn/login/*` | public | Connexion par passkey, sans courriel |
+| GET | `/episodes`, `/episodes/{slug}`, `/episodes/search?q=` | public | Épisodes publiés uniquement |
+| GET | `/guests`, `/guests/{slug}` | public | Invités |
+| GET | `/shop/drop` | public | Drop courant, dates réelles, stock restant |
+| POST | `/shop/checkout` | session | Réservation puis session Stripe Checkout |
+| GET | `/shop/orders/{id}/status` | public | État d'une commande (aucune donnée personnelle) |
+| POST | `/shop/webhook` | Stripe (signé) | `checkout.session.completed` / `expired` / `async_payment_failed` |
+| GET | `/admin/overview` | ADMIN | Compteurs |
 
-## Roadmap d'industrialisation
+## Sécurité — décisions
 
-1. Brancher le frontend sur l'API (remplacer les mocks `data/` par TanStack Query).
-2. Finaliser la ceremony WebAuthn (challenge/attestation/assertion) serveur ↔ navigateur.
-3. Intégrer Stripe (PaymentIntents + webhooks) pour La Réserve.
-4. Activer Redis (cache épisodes + compteurs sociaux via Cron).
-5. CI/CD + déploiement (Docker → AWS/GCP) derrière Cloudflare Enterprise.
+- **Session** : cookie HttpOnly signé (JWT HS256, `jti` révocable via Redis). Le JavaScript ne voit jamais le secret.
+- **CSRF** : SameSite=Lax + en-tête `Origin` (ou `Referer`) obligatoire et égal à `CORS_ORIGIN` pour toute requête non sûre authentifiée par cookie.
+- **Rate limiting** : par route et par IP (Redis, fenêtre fixe) ; `X-Forwarded-For` ignoré sauf `TRUST_FORWARDED_FOR=true` derrière un proxy de confiance.
+- **Paiement** : prix et quantités calculés côté serveur ; webhook signé ; un identifiant d'événement n'est traité qu'une fois.
+- **Secrets** : jamais dans Git ; valeurs par défaut volontairement reconnaissables (`replace_me`).

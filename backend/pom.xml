@@ -45,6 +45,9 @@
     <!-- Paiement : Stripe (boutique capsule) -->
     <dependency><groupId>com.stripe</groupId><artifactId>stripe-java</artifactId><version>${stripe.version}</version></dependency>
 
+    <!-- Courriel : envoi du lien magique (SMTP) — mode « log » sans serveur en dev -->
+    <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-mail</artifactId></dependency>
+
     <!-- WebAuthn : vérification cryptographique attestation/assertion -->
     <dependency><groupId>com.webauthn4j</groupId><artifactId>webauthn4j-core</artifactId><version>0.22.2.RELEASE</version></dependency>
 

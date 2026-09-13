@@ -1,10 +1,15 @@
 package com.cabanedulys.api.exceptions;
 
+import com.cabanedulys.api.mail.MailDeliveryException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -22,31 +27,66 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
     private static final String BASE_TYPE = "https://cabanedulys.ca/errors/";
 
     @ExceptionHandler(NotFoundException.class)
     public ProblemDetail handleNotFound(NotFoundException ex) {
-        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
-        pd.setTitle("Resource Not Found");
-        pd.setType(URI.create(BASE_TYPE + "not-found"));
-        return pd;
+        return problem(HttpStatus.NOT_FOUND, "Resource Not Found", ex.getMessage(), "not-found");
     }
 
     @ExceptionHandler(IllegalStateException.class)
     public ProblemDetail handleConflict(IllegalStateException ex) {
-        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
-        pd.setTitle("Conflict");
-        pd.setType(URI.create(BASE_TYPE + "conflict"));
-        return pd;
+        return problem(HttpStatus.CONFLICT, "Conflict", ex.getMessage(), "conflict");
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ProblemDetail handleBadRequest(IllegalArgumentException ex) {
+        return problem(HttpStatus.BAD_REQUEST, "Bad Request", ex.getMessage(), "bad-request");
+    }
+
+    @ExceptionHandler(FeatureDisabledException.class)
+    public ProblemDetail handleFeatureDisabled(FeatureDisabledException ex) {
+        return problem(HttpStatus.SERVICE_UNAVAILABLE, "Feature Disabled", ex.getMessage(), "feature-disabled");
+    }
+
+    @ExceptionHandler(MailDeliveryException.class)
+    public ProblemDetail handleMail(MailDeliveryException ex) {
+        return problem(HttpStatus.SERVICE_UNAVAILABLE, "Mail Unavailable", ex.getMessage(), "mail-unavailable");
+    }
+
+    @ExceptionHandler(InvalidMagicLinkException.class)
+    public ProblemDetail handleInvalidMagicLink(InvalidMagicLinkException ex) {
+        return problem(HttpStatus.UNAUTHORIZED, "Invalid Magic Link", ex.getMessage(), "magic-link-invalid");
+    }
+
+    @ExceptionHandler(SoldOutException.class)
+    public ProblemDetail handleSoldOut(SoldOutException ex) {
+        return problem(HttpStatus.CONFLICT, "Sold Out", ex.getMessage(), "sold-out");
+    }
+
+    @ExceptionHandler(PaymentUnavailableException.class)
+    public ProblemDetail handlePayment(PaymentUnavailableException ex) {
+        return problem(HttpStatus.SERVICE_UNAVAILABLE, "Payment Unavailable", ex.getMessage(), "payment-unavailable");
+    }
+
+    /** Échec d'une règle {@code @PreAuthorize} à l'intérieur d'un contrôleur. */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ProblemDetail handleAccessDenied(AccessDeniedException ex) {
+        return problem(HttpStatus.FORBIDDEN, "Forbidden",
+                "Vous n'avez pas les droits nécessaires pour cette action.", "forbidden");
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ProblemDetail handleAuthentication(AuthenticationException ex) {
+        return problem(HttpStatus.UNAUTHORIZED, "Unauthorized", "Authentification requise.", "unauthorized");
     }
 
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleGeneric(Exception ex) {
-        ProblemDetail pd = ProblemDetail.forStatusAndDetail(
-                HttpStatus.INTERNAL_SERVER_ERROR, "Une erreur inattendue est survenue.");
-        pd.setTitle("Internal Server Error");
-        pd.setType(URI.create(BASE_TYPE + "internal"));
-        return pd;
+        log.error("Erreur non gérée : {}", ex.toString(), ex);
+        return problem(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error",
+                "Une erreur inattendue est survenue.", "internal");
     }
 
     /** Validation Jakarta Bean Validation — liste les violations par champ. */
@@ -62,12 +102,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                         e.getDefaultMessage() != null ? e.getDefaultMessage() : "invalide"))
                 .toList();
 
-        ProblemDetail pd = ProblemDetail.forStatusAndDetail(
-                HttpStatus.UNPROCESSABLE_ENTITY, "La validation des données a échoué.");
-        pd.setTitle("Validation Failed");
-        pd.setType(URI.create(BASE_TYPE + "validation"));
+        ProblemDetail pd = problem(HttpStatus.UNPROCESSABLE_ENTITY, "Validation Failed",
+                "La validation des données a échoué.", "validation");
         pd.setProperty("violations", violations);
 
         return ResponseEntity.unprocessableEntity().body(pd);
+    }
+
+    private static ProblemDetail problem(HttpStatus status, String title, String detail, String typeSlug) {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(status, detail);
+        pd.setTitle(title);
+        pd.setType(URI.create(BASE_TYPE + typeSlug));
+        return pd;
     }
 }

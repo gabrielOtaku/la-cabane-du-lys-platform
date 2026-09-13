@@ -1,11 +1,12 @@
 "use client";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ArrowRight, MapPin } from "lucide-react";
 import Link from "next/link";
-import { useGuests } from "@/lib/queries";
+import { useGuests, useEpisodes } from "@/lib/queries";
 import { guests as mockGuests } from "@/data/guests";
-import { sectorLabel } from "@/components/ui/RelicIcon";
+import { episodes as mockEpisodes } from "@/data/episodes";
+import { withDevFallback } from "@/lib/fixtures";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 
 const slideVariants = {
@@ -37,7 +38,10 @@ const slideVariants = {
 
 export function Salle() {
   const { data } = useGuests();
-  const list = (data && data.length > 0) ? data : mockGuests;
+  const list = withDevFallback(data, mockGuests, []);
+  const { data: apiEpisodes } = useEpisodes();
+  const allEpisodes = withDevFallback(apiEpisodes, mockEpisodes, []);
+
   const [idx, setIdx] = useState(0);
   const [dir, setDir] = useState(0);
 
@@ -47,14 +51,18 @@ export function Salle() {
   const g = list[idx];
   if (!g) return null;
 
+  const linkedEpisode = allEpisodes.find((e) => e.guests.some((gu) => gu.slug === g.slug || gu.id === g.id));
+  const episodeIsLive = linkedEpisode?.status === "PUBLISHED";
+  const ancrage = [g.city, g.region].filter(Boolean).join(", ");
+
   return (
     <section id="salle" className="salle">
       <div className="container">
 
         <div className="salle-carousel-head" data-reveal>
           <div>
-            <span className="eyebrow">La Salle des Trophées</span>
-            <h2 className="sec-title">Les <em>reliques</em> de celles<br />et ceux qui ont bâti.</h2>
+            <span className="eyebrow">La Salle — Invités</span>
+            <h2 className="sec-title">Les parcours de celles<br />et ceux qui ont bâti.</h2>
           </div>
           <div className="salle-ctrl-group">
             <span className="salle-index">
@@ -87,40 +95,37 @@ export function Salle() {
               {/* Colonne info invité */}
               <div>
                 <div className="salle-badge-row">
-                  <span className="salle-badge">{sectorLabel[g.sector]}</span>
-                  <span className="salle-verified">
-                    <ShieldCheck size={12} /> Vérifié
-                  </span>
+                  {g.category && <span className="salle-badge">{g.category}</span>}
+                  {ancrage && (
+                    <span className="salle-verified">
+                      <MapPin size={12} /> {ancrage}
+                    </span>
+                  )}
                 </div>
                 <h3 className="salle-guest-name">{g.name}</h3>
                 <p className="salle-guest-role">
                   {g.role} · <span>{g.company}</span>
                 </p>
-                <blockquote className="salle-quote">« {g.quote} »</blockquote>
+                {g.quote && <blockquote className="salle-quote">« {g.quote} »</blockquote>}
               </div>
 
-              {/* Colonne fiche métrique */}
+              {/* Colonne parcours */}
               <div className="salle-metric-card">
                 <div className="salle-metric-glow" />
-                <span className="salle-metric-label">Impact &amp; Performance</span>
-                <div className="salle-metric-value">{g.revenue}</div>
-                <div className="salle-metric-rows">
-                  <div>
-                    <span>Relique associée</span>
-                    <span>Modèle 3D</span>
-                  </div>
-                  <div>
-                    <span>Équipe</span>
-                    <span>
-                      <span className="salle-pulse" />
-                      {g.employees} personnes
-                    </span>
-                  </div>
+                <span className="salle-metric-label">Ce que l&apos;on explore</span>
+                <div className="salle-metric-value" style={{ fontSize: "1.05rem", lineHeight: 1.4 }}>
+                  {g.angle ?? "Parcours entrepreneurial à découvrir."}
                 </div>
                 <MagneticButton style={{ display: "block" }}>
-                  <Link href="/hall-of-fame" className="salle-cta">
-                    Inspecter la Relique
-                  </Link>
+                  {episodeIsLive ? (
+                    <Link href={`/episodes/${linkedEpisode!.slug}`} className="salle-cta">
+                      Voir l&apos;épisode
+                    </Link>
+                  ) : (
+                    <Link href={`/invites/${g.slug}`} className="salle-cta">
+                      Découvrir le parcours
+                    </Link>
+                  )}
                 </MagneticButton>
               </div>
             </motion.div>

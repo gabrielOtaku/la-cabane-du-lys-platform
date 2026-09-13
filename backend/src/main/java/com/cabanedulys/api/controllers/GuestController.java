@@ -17,4 +17,7 @@ public class GuestController {
 
     @GetMapping
     public List<GuestDto> all() { return service.findAll(); }
+
+    @GetMapping("/{slug}")
+    public GuestDto one(@PathVariable String slug) { return service.findBySlug(slug); }
 }
