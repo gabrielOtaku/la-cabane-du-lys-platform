@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Manrope } from "next/font/google";
-import "./globals.css";
+// import "./globals.css";
 
 import { Providers } from "@/components/layout/Providers";
 import { Preloader } from "@/components/layout/Preloader";
