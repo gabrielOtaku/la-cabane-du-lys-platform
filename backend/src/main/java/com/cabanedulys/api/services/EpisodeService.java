@@ -29,18 +29,28 @@ public class EpisodeService {
         this.mapper = mapper;
     }
 
-    /** Uniquement les épisodes publiés — un DRAFT en post-production n'apparaît jamais ici. */
+    /**
+     * Uniquement les épisodes publiés — un DRAFT en post-production n'apparaît
+     * jamais ici.
+     */
     @Cacheable("episodes")
     public List<EpisodeDto> findAll() {
         return repo.findAllByStatusOrderByNumberDesc(EpisodeStatus.PUBLISHED).stream()
                 .map(e -> EpisodeDto.from(e, parseTranscript(e))).toList();
     }
 
-    /** À appeler après toute mutation (création, mise à jour, suppression, publication d'épisode). */
+    /**
+     * À appeler après toute mutation (création, mise à jour, suppression,
+     * publication d'épisode).
+     */
     @CacheEvict(value = "episodes", allEntries = true)
-    public void evictAll() {}
+    public void evictAll() {
+    }
 
-    /** Accepte un slug humain ou, en repli, un UUID brut. Ne résout que les épisodes publiés. */
+    /**
+     * Accepte un slug humain ou, en repli, un UUID brut. Ne résout que les épisodes
+     * publiés.
+     */
     public EpisodeDto findBySlug(String slug) {
         Episode e = repo.findBySlugAndStatus(slug, EpisodeStatus.PUBLISHED)
                 .or(() -> SlugUtils.tryParseUuid(slug)
@@ -53,9 +63,13 @@ public class EpisodeService {
         return findBySlug(id.toString());
     }
 
-    /** Recherche plein texte via PostgreSQL tsvector. Retourne [] si le profil dev (H2) est actif. */
+    /**
+     * Recherche plein texte via PostgreSQL tsvector. Retourne [] si le profil dev
+     * (H2) est actif.
+     */
     public List<EpisodeDto> search(String q) {
-        if (!StringUtils.hasText(q)) return List.of();
+        if (!StringUtils.hasText(q))
+            return List.of();
         try {
             return repo.search(q.trim()).stream()
                     .map(e -> EpisodeDto.from(e, parseTranscript(e))).toList();
@@ -65,9 +79,11 @@ public class EpisodeService {
     }
 
     private List<TranscriptLineDto> parseTranscript(Episode e) {
-        if (e.getTranscriptJson() == null || e.getTranscriptJson().isBlank()) return Collections.emptyList();
+        if (e.getTranscriptJson() == null || e.getTranscriptJson().isBlank())
+            return Collections.emptyList();
         try {
-            return mapper.readValue(e.getTranscriptJson(), new TypeReference<List<TranscriptLineDto>>() {});
+            return mapper.readValue(e.getTranscriptJson(), new TypeReference<List<TranscriptLineDto>>() {
+            });
         } catch (Exception ex) {
             return Collections.emptyList();
         }
