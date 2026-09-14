@@ -6,12 +6,17 @@ import com.cabanedulys.api.models.User;
 import com.cabanedulys.api.models.WebAuthnCredential;
 import com.cabanedulys.api.repositories.UserRepository;
 import com.cabanedulys.api.repositories.WebAuthnCredentialRepository;
-import com.webauthn4j.WebAuthnManager;
-import com.webauthn4j.authenticator.AuthenticatorImpl;
+import com.webauthn4j.WebAuthnAuthenticationManager;
+import com.webauthn4j.WebAuthnRegistrationManager;
 import com.webauthn4j.converter.util.ObjectConverter;
+import com.webauthn4j.credential.CredentialRecord;
+import com.webauthn4j.credential.CredentialRecordImpl;
 import com.webauthn4j.data.*;
+import com.webauthn4j.data.attestation.authenticator.AAGUID;
 import com.webauthn4j.data.attestation.authenticator.AttestedCredentialData;
 import com.webauthn4j.data.attestation.authenticator.COSEKey;
+import com.webauthn4j.data.attestation.statement.COSEAlgorithmIdentifier;
+import com.webauthn4j.data.attestation.statement.NoneAttestationStatement;
 import com.webauthn4j.data.client.Origin;
 import com.webauthn4j.data.client.challenge.DefaultChallenge;
 import com.webauthn4j.server.ServerProperty;
@@ -47,8 +52,14 @@ public class AuthService {
     private final WebAuthnCredentialRepository credentials;
     private final WebAuthnConfig webAuthn;
     private final StringRedisTemplate redis;
-    private final WebAuthnManager webAuthnManager;
+    private final WebAuthnRegistrationManager registrationManager;
+    private final WebAuthnAuthenticationManager authenticationManager;
     private final ObjectConverter objectConverter;
+
+    /** Algorithmes proposés à l'enregistrement (mêmes valeurs que registrationOptions) : ES256 puis RS256. */
+    private static final List<PublicKeyCredentialParameters> PUB_KEY_CRED_PARAMS = List.of(
+            new PublicKeyCredentialParameters(PublicKeyCredentialType.PUBLIC_KEY, COSEAlgorithmIdentifier.ES256),
+            new PublicKeyCredentialParameters(PublicKeyCredentialType.PUBLIC_KEY, COSEAlgorithmIdentifier.RS256));
 
     private final SecureRandom random = new SecureRandom();
     private final Base64.Encoder b64url = Base64.getUrlEncoder().withoutPadding();
@@ -61,7 +72,9 @@ public class AuthService {
         this.webAuthn = webAuthn;
         this.redis = redis;
         this.objectConverter = new ObjectConverter();
-        this.webAuthnManager = WebAuthnManager.createNonStrictWebAuthnManager();
+        // Attestation « none » demandée au navigateur : vérification non stricte des chaînes de certificats.
+        this.registrationManager = WebAuthnRegistrationManager.createNonStrictWebAuthnRegistrationManager(objectConverter);
+        this.authenticationManager = new WebAuthnAuthenticationManager(List.of(), objectConverter);
     }
 
     // ---------- WebAuthn : enregistrement (session requise) ----------
@@ -103,22 +116,17 @@ public class AuthService {
         byte[] attestationObj   = b64urlDec.decode(str(req.response(), "attestationObject"));
 
         RegistrationRequest request = new RegistrationRequest(attestationObj, clientDataJSON);
+        ServerProperty serverProperty = serverProperty(storedChallenge);
+        RegistrationParameters params = new RegistrationParameters(serverProperty, PUB_KEY_CRED_PARAMS, false, true);
 
-        Set<Origin> origins = Set.of(new Origin(webAuthn.getOrigin()));
-        DefaultChallenge challenge = new DefaultChallenge(b64urlDec.decode(storedChallenge));
-        ServerProperty serverProperty = new ServerProperty(origins, webAuthn.getRpId(), challenge, null);
-
-        RegistrationParameters params = new RegistrationParameters(serverProperty, null, false, true);
-
-        RegistrationData result = webAuthnManager.validate(request, params);
+        RegistrationData result = registrationManager.verify(request, params);
 
         AttestedCredentialData acd = result.getAttestationObject()
                 .getAuthenticatorData()
                 .getAttestedCredentialData();
 
         String credentialId = b64url.encodeToString(acd.getCredentialId());
-        String publicKey    = b64url.encodeToString(
-                objectConverter.getCborConverter().writeValueAsBytes(acd.getCOSEKey()));
+        String publicKey    = b64url.encodeToString(encodeCoseKey(acd.getCOSEKey()));
 
         credentials.save(WebAuthnCredential.builder()
                 .credentialId(credentialId)
@@ -166,24 +174,40 @@ public class AuthService {
         AuthenticationRequest request = new AuthenticationRequest(
                 credentialId, userHandle, authenticatorData, clientDataJSON, signature);
 
-        Set<Origin> origins = Set.of(new Origin(webAuthn.getOrigin()));
-        DefaultChallenge challenge = new DefaultChallenge(b64urlDec.decode(storedChallenge));
-        ServerProperty serverProperty = new ServerProperty(origins, webAuthn.getRpId(), challenge, null);
+        ServerProperty serverProperty = serverProperty(storedChallenge);
 
-        COSEKey coseKey = objectConverter.getCborConverter()
-                .readValue(b64urlDec.decode(cred.getPublicKey()), COSEKey.class);
-        AttestedCredentialData acd = new AttestedCredentialData(null, credentialId, coseKey);
-        AuthenticatorImpl authenticator = new AuthenticatorImpl(acd, null, cred.getSignatureCount());
+        // Enregistrement minimal : seuls l'identifiant, la clé publique et le compteur sont conservés en base.
+        COSEKey coseKey = decodeCoseKey(b64urlDec.decode(cred.getPublicKey()));
+        AttestedCredentialData acd = new AttestedCredentialData(AAGUID.ZERO, credentialId, coseKey);
+        CredentialRecord record = new CredentialRecordImpl(
+                new NoneAttestationStatement(), null, null, null, cred.getSignatureCount(),
+                acd, null, null, null, null);
 
-        AuthenticationParameters params = new AuthenticationParameters(serverProperty, authenticator, null, false, true);
+        AuthenticationParameters params = new AuthenticationParameters(serverProperty, record, null, false, true);
 
-        AuthenticationData result = webAuthnManager.validate(request, params);
+        AuthenticationData result = authenticationManager.verify(request, params);
 
         cred.setSignatureCount(result.getAuthenticatorData().getSignCount());
         return cred.getUser();
     }
 
     // ---------- utilitaires ----------
+
+    private ServerProperty serverProperty(String storedChallenge) {
+        return ServerProperty.builder()
+                .origin(new Origin(webAuthn.getOrigin()))
+                .rpId(webAuthn.getRpId())
+                .challenge(new DefaultChallenge(b64urlDec.decode(storedChallenge)))
+                .build();
+    }
+
+    private byte[] encodeCoseKey(COSEKey key) {
+        return objectConverter.getCborMapper().writeValueAsBytes(key);
+    }
+
+    private COSEKey decodeCoseKey(byte[] cbor) {
+        return objectConverter.getCborMapper().readValue(cbor, COSEKey.class);
+    }
 
     private String newId() {
         byte[] buf = new byte[16];
