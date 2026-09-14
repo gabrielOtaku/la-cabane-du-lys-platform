@@ -2,6 +2,7 @@
    CURSEUR FLEUR DE LYS + LUCIOLES (phase 4)
    Le curseur natif est masqué uniquement quand le composant est actif
    (classe html.custom-cursor) : tactile et mouvement réduit gardent le curseur natif.
+   Révision 2026-09-14 : une seule pièce, la fleur (28 px), sans halo ni anneau.
 ============================================================ */
 
 html.custom-cursor,
@@ -16,42 +17,17 @@ html.custom-cursor[data-cursor-mode="text"] select {
   cursor: default !important;
 }
 
-.cursor-ring,
 .cursor-lys {
   position: fixed;
   top: 0;
   left: 0;
+  z-index: 10000;
   pointer-events: none;
   will-change: transform;
-  transition: opacity var(--motion-standard) var(--ease-standard);
-}
-.cursor-ring {
-  z-index: 9999;
-  width: 30px;
-  height: 30px;
-  margin: -15px 0 0 -15px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(255, 170, 0, 0.55);
-  background: radial-gradient(circle, rgba(255, 140, 40, 0.13) 0%, transparent 70%);
-  mix-blend-mode: screen;
-}
-.cursor-ring-icon {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  color: rgba(255, 200, 80, 1);
-  filter: drop-shadow(0 0 5px rgba(255, 170, 0, 0.9));
-  pointer-events: none;
-}
-.cursor-lys {
-  z-index: 10000;
-  /* la pointe supérieure du lys est le point actif : décalage pour aligner avec le pointeur */
-  margin: -1px 0 0 -8px;
-  filter: drop-shadow(0 0 4px rgba(255, 170, 0, 0.55));
+  /* la pointe supérieure du lys est le point actif : décalage horizontal posé en ligne (moitié de la largeur) */
+  filter: drop-shadow(0 0 6px rgba(255, 170, 0, 0.6));
   transform-origin: 50% 4%;
+  transition: opacity var(--motion-standard) var(--ease-standard);
 }
 
 /* ---------- lucioles ---------- */
@@ -94,7 +70,6 @@ html.custom-cursor[data-cursor-mode="text"] select {
 
 @media (prefers-reduced-motion: reduce), (hover: none), (pointer: coarse) {
   .firefly-layer,
-  .cursor-ring,
   .cursor-lys {
     display: none;
   }

@@ -1,14 +1,15 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { motion, useAnimationControls, useMotionValue, useSpring } from "framer-motion";
+import { motion, useAnimationControls, useMotionValue } from "framer-motion";
 import { fireflyBurst } from "@/features/effects/fireflies";
 
 /**
- * Curseur fleur de lys V2 (feuille de route, phase 4).
+ * Curseur fleur de lys V2 (feuille de route, phase 4 — révision du 2026-09-14 : « juste la fleur »).
  *
  *  - Symbole SVG partagé (#lysmark, voir LysDefs) : net à toute échelle, recolorable.
- *  - Halo avec inertie légère ; transformations limitées sur les éléments magnétiques.
- *  - Modes : default · link · button · text (curseur natif dans les champs) · play · pause · 3d.
+ *  - Une seule pièce : la fleur, sans halo ni anneau. Sa pointe supérieure est le point actif.
+ *  - Modes : default · link · button · text (curseur natif dans les champs) · play · pause · 3d,
+ *    exprimés uniquement par l'échelle, l'inclinaison et l'opacité de la fleur.
  *  - Lucioles au clic ; variante Play : elles convergent vers la waveform du lecteur.
  *  - Désactivé sur écran tactile et avec « mouvement réduit » : le curseur natif reste disponible.
  *  - Le calque n'intercepte jamais les clics (pointer-events: none).
@@ -16,29 +17,18 @@ import { fireflyBurst } from "@/features/effects/fireflies";
 
 type CursorMode = "default" | "link" | "button" | "text" | "magnetic" | "3d" | "play" | "pause";
 
-const SPRING = { stiffness: 110, damping: 20, mass: 0.45 };
-const LYS_SIZE = 16; // px sur bureau (14 à 18 recommandés)
-
-const RING: Record<CursorMode, { scale: number; opacity: number; borderColor: string }> = {
-  default:  { scale: 1,    opacity: 0.85, borderColor: "rgba(255,170,0,0.55)" },
-  link:     { scale: 1.6,  opacity: 1,    borderColor: "rgba(255,170,0,0.85)" },
-  button:   { scale: 1.9,  opacity: 1,    borderColor: "rgba(255,170,0,0.95)" },
-  magnetic: { scale: 1.9,  opacity: 1,    borderColor: "rgba(255,170,0,0.95)" },
-  text:     { scale: 0.6,  opacity: 0,    borderColor: "rgba(255,170,0,0)" },
-  "3d":     { scale: 1.8,  opacity: 1,    borderColor: "rgba(255,170,0,0.4)" },
-  play:     { scale: 2.0,  opacity: 1,    borderColor: "rgba(255,170,0,0.8)" },
-  pause:    { scale: 2.0,  opacity: 1,    borderColor: "rgba(255,170,0,0.8)" },
-};
+const LYS_WIDTH = 28;                 // px sur bureau (largeur ; le symbole est au ratio 120 × 150)
+const LYS_HEIGHT = LYS_WIDTH * 1.25;
 
 const LYS: Record<CursorMode, { scale: number; opacity: number; rotate: number }> = {
-  default:  { scale: 1,    opacity: 1,   rotate: 0 },
-  link:     { scale: 1.15, opacity: 1,   rotate: -8 },
-  button:   { scale: 1.15, opacity: 1,   rotate: -8 },
-  magnetic: { scale: 1.15, opacity: 1,   rotate: -8 },
-  text:     { scale: 0.7,  opacity: 0,   rotate: 0 },
-  "3d":     { scale: 0.9,  opacity: 0.9, rotate: 0 },
-  play:     { scale: 0.85, opacity: 0.9, rotate: 0 },
-  pause:    { scale: 0.85, opacity: 0.9, rotate: 0 },
+  default:  { scale: 1,    opacity: 1,    rotate: 0 },
+  link:     { scale: 1.15, opacity: 1,    rotate: -8 },
+  button:   { scale: 1.2,  opacity: 1,    rotate: -8 },
+  magnetic: { scale: 1.2,  opacity: 1,    rotate: -8 },
+  text:     { scale: 0.7,  opacity: 0,    rotate: 0 },
+  "3d":     { scale: 1.1,  opacity: 0.95, rotate: 0 },
+  play:     { scale: 1.1,  opacity: 0.95, rotate: 0 },
+  pause:    { scale: 1.1,  opacity: 0.95, rotate: 0 },
 };
 
 const TEXT_FIELDS = "input:not([type=button]):not([type=submit]):not([type=checkbox]):not([type=radio]), textarea, select, [contenteditable=''], [contenteditable='true']";
@@ -91,24 +81,17 @@ export function CustomCursor() {
 function CursorLayer() {
   const rawX = useMotionValue(-200);
   const rawY = useMotionValue(-200);
-  const ringX = useSpring(rawX, SPRING);
-  const ringY = useSpring(rawY, SPRING);
 
   const modeRef = useRef<CursorMode>("default");
-  const [mode, setMode] = useState<CursorMode>("default");
   const [visible, setVisible] = useState(false);
-  const ringCtrl = useAnimationControls();
   const lysCtrl = useAnimationControls();
 
   const switchMode = useCallback((m: CursorMode) => {
     if (modeRef.current === m) return;
     modeRef.current = m;
-    setMode(m);
     document.documentElement.dataset.cursorMode = m;
-    const ease = [0.16, 1, 0.3, 1] as const;
-    ringCtrl.start({ ...RING[m], transition: { duration: 0.26, ease } });
-    lysCtrl.start({ ...LYS[m], transition: { duration: 0.2, ease } });
-  }, [ringCtrl, lysCtrl]);
+    lysCtrl.start({ ...LYS[m], transition: { duration: 0.2, ease: [0.16, 1, 0.3, 1] } });
+  }, [lysCtrl]);
 
   useEffect(() => {
     let shown = false;
@@ -126,11 +109,11 @@ function CursorLayer() {
       const m = modeRef.current;
       if (m === "text") return;
 
-      // Contraction du halo (retour visuel court, famille « Luciole »).
-      const base = RING[m].scale;
-      ringCtrl.start({
-        scale: [base, base * 0.55, base],
-        transition: { duration: 0.32, times: [0, 0.3, 1], ease: "easeOut" },
+      // Léger appui de la fleur (retour visuel court, famille « Luciole »).
+      const base = LYS[m].scale;
+      lysCtrl.start({
+        scale: [base, base * 0.82, base],
+        transition: { duration: 0.28, times: [0, 0.3, 1], ease: "easeOut" },
       });
 
       // Variante Play : convergence vers la waveform du lecteur cliqué.
@@ -158,61 +141,22 @@ function CursorLayer() {
       document.documentElement.removeEventListener("mouseleave", onLeave);
       document.documentElement.removeEventListener("mouseenter", onEnter);
     };
-  }, [rawX, rawY, switchMode, ringCtrl]);
+  }, [rawX, rawY, switchMode, lysCtrl]);
 
   return (
-    <>
-      {/* Halo — inertie via ressort */}
-      <motion.div
-        className="cursor-ring"
-        animate={ringCtrl}
-        initial={RING.default}
-        style={{ x: ringX, y: ringY, opacity: visible ? undefined : 0 }}
-        aria-hidden="true"
-      >
-        {mode === "3d" && (
-          <motion.div
-            style={{ position: "absolute", inset: -30, pointerEvents: "none" }}
-            animate={{ rotate: 360 }}
-            transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
-          >
-            <svg viewBox="0 0 90 90" width="90" height="90" aria-hidden>
-              <defs>
-                <path id="orb-path" d="M 45,45 m -35,0 a 35,35 0 1,1 70,0 a 35,35 0 1,1 -70,0" />
-              </defs>
-              <text fill="rgba(255,185,60,0.88)" fontSize="7" fontFamily="var(--serif)" letterSpacing="1.8">
-                <textPath href="#orb-path">VOIR LA RELIQUE • VOIR LA RELIQUE •</textPath>
-              </text>
-            </svg>
-          </motion.div>
-        )}
-        {(mode === "play" || mode === "pause") && (
-          <motion.span
-            key={mode}
-            className="cursor-ring-icon"
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.18 }}
-          >
-            {mode === "play" ? "▶" : "⏸"}
-          </motion.span>
-        )}
-      </motion.div>
-
-      {/* Fleur de lys — position instantanée, pointe du curseur */}
-      <motion.svg
-        className="cursor-lys"
-        viewBox="0 0 120 150"
-        width={LYS_SIZE}
-        height={LYS_SIZE * 1.25}
-        animate={lysCtrl}
-        initial={LYS.default}
-        style={{ x: rawX, y: rawY, opacity: visible ? undefined : 0 }}
-        aria-hidden="true"
-        focusable="false"
-      >
-        <use href="#lysmark" />
-      </motion.svg>
-    </>
+    // Fleur de lys — position instantanée ; la pointe supérieure coïncide avec le pointeur.
+    <motion.svg
+      className="cursor-lys"
+      viewBox="0 0 120 150"
+      width={LYS_WIDTH}
+      height={LYS_HEIGHT}
+      animate={lysCtrl}
+      initial={LYS.default}
+      style={{ x: rawX, y: rawY, marginLeft: -LYS_WIDTH / 2, marginTop: -1, opacity: visible ? undefined : 0 }}
+      aria-hidden="true"
+      focusable="false"
+    >
+      <use href="#lysmark" />
+    </motion.svg>
   );
 }
