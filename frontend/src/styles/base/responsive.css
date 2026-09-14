@@ -1,0 +1,74 @@
+/* ============================================================
+   RESPONSIVE
+============================================================ */
+@media (max-width: 1024px) {
+  .coffre-feat {
+    grid-template-columns: 1fr;
+  }
+  .player {
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .manifeste-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .cercle-grid {
+    grid-template-columns: 1fr;
+    gap: 50px;
+  }
+  .card-stage {
+    order: -1;
+  }
+  .ep-grid,
+  .veil-grid,
+  .diff-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 768px) {
+  .nav {
+    top: 12px;
+    padding: 8px 8px 8px 16px;
+  }
+  .links,
+  .nav-cta {
+    display: none;
+  }
+  .burger {
+    display: flex;
+  }
+  .hero-stats .container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .hstat:nth-child(2) {
+    border-right: none;
+  }
+  .hstat:nth-child(1),
+  .hstat:nth-child(2) {
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .ep-grid,
+  .veil-grid,
+  .diff-grid {
+    grid-template-columns: 1fr;
+  }
+  .foot-top {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+  .salle-head {
+    align-items: flex-start;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001s !important;
+    transition-duration: 0.2s !important;
+  }
+  .fireglow,
+  .grain {
+    animation: none;
+  }
+}
+

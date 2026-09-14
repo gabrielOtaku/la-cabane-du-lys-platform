@@ -4,15 +4,7 @@
    tout nouveau style vit ici ou dans un fichier de src/styles/, jamais dans globals.css.
 ============================================================ */
 
-/* ---------- tokens de mouvement (annexe « variables de mouvement ») ---------- */
-:root {
-  --motion-fast: 160ms;
-  --motion-standard: 280ms;
-  --motion-organic: 600ms;
-  --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
-  --glow-low: 0.35;
-  --glow-active: 0.9;
-}
+/* Les tokens (couleur, espace, mouvement, couches) vivent dans base/tokens.css. */
 
 /* ---------- accessibilité ---------- */
 .sr-only {

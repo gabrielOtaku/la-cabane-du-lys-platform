@@ -19,6 +19,16 @@ public interface EpisodeRepository extends JpaRepository<Episode, UUID> {
 
     long countByStatus(EpisodeStatus status);
 
+    boolean existsByNumber(int number);
+
+    boolean existsByNumberAndIdNot(int number, UUID id);
+
+    boolean existsBySlug(String slug);
+
+    boolean existsBySlugAndIdNot(String slug, UUID id);
+
+    List<Episode> findAllByGuests_Id(UUID guestId);
+
     @Query(value = """
             SELECT * FROM episodes
             WHERE status = 'PUBLISHED' AND search_vec @@ plainto_tsquery('french', :q)

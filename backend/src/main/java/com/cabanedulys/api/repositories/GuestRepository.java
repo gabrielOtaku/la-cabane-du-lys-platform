@@ -7,4 +7,6 @@ import java.util.UUID;
 
 public interface GuestRepository extends JpaRepository<Guest, UUID> {
     Optional<Guest> findBySlug(String slug);
+    boolean existsBySlug(String slug);
+    boolean existsBySlugAndIdNot(String slug, UUID id);
 }

@@ -1,0 +1,244 @@
+/* ============================================================
+   PAGES INTERNES (hall-of-fame, épisode, login, drop)
+============================================================ */
+.subpage {
+  padding-top: clamp(120px, 16vh, 180px);
+  min-height: 100vh;
+  position: relative;
+  z-index: 2;
+}
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: var(--smoke);
+  margin-bottom: 2rem;
+  transition: 0.3s var(--ease);
+}
+.back-link:hover {
+  color: var(--gold);
+}
+.page-head {
+  max-width: 760px;
+  margin: 0 auto;
+  text-align: center;
+}
+.page-head .sec-title {
+  margin-top: 14px;
+}
+.page-head .lead {
+  margin: 18px auto 0;
+}
+
+/* ── Salle des Trophées — layout plein écran ──────────────────────────────── */
+.hall-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
+
+/* Bouton retour — juste sous le header */
+.hall-nav {
+  position: fixed;
+  top: 40px;
+  left: clamp(20px, 5vw, 60px);
+  z-index: 50;
+  padding-top: 0;
+  pointer-events: auto;
+}
+
+/* Titre — ancré bas-gauche, laisse le centre libre pour les fiches holographiques */
+.hall-label {
+  position: fixed;
+  bottom: clamp(60px, 9vh, 96px);
+  left: clamp(20px, 5vw, 60px);
+  z-index: 4;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(13, 13, 13, 0.72) 0%,
+    transparent 100%
+  );
+  padding: 20px 28px 20px 0;
+  border-radius: 8px;
+}
+.hall-eyebrow {
+  display: block;
+  font-size: 0.57rem;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--bronze);
+  margin-bottom: 10px;
+}
+.hall-label h1 {
+  font-family: var(--serif);
+  font-weight: 340;
+  font-size: clamp(1.5rem, 3.2vw, 2.5rem);
+  line-height: 1.06;
+  color: var(--cream);
+  text-shadow:
+    0 4px 32px rgba(0, 0, 0, 0.95),
+    0 1px 8px rgba(0, 0, 0, 0.8);
+}
+.hall-label h1 em {
+  font-style: italic;
+  color: var(--gold-bright);
+}
+.hall-label p {
+  color: var(--smoke);
+  font-size: 0.82rem;
+  margin-top: 0.45rem;
+  max-width: 300px;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
+}
+
+/* Astuce navigation */
+.hall-tip {
+  position: fixed;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  font-size: 0.65rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(110, 101, 90, 0.7);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(13, 13, 13, 0.5);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  padding: 6px 16px;
+  border-radius: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Fiche holographique (Drei <Html>) */
+.holo-card {
+  width: 260px;
+  padding: 20px 24px;
+  border-radius: 14px;
+  background: linear-gradient(
+    160deg,
+    rgba(26, 22, 14, 0.92),
+    rgba(13, 13, 13, 0.92)
+  );
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  box-shadow:
+    0 0 40px -8px rgba(255, 170, 0, 0.4),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  transform: translateY(-10px);
+  animation: holoIn 0.5s var(--ease) both;
+  color: var(--cream);
+  font-family: var(--sans);
+}
+@keyframes holoIn {
+  from {
+    opacity: 0;
+    transform: translateY(0) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-10px) scale(1);
+  }
+}
+.holo-sector {
+  font-size: 0.56rem;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--bronze);
+}
+.holo-card h3 {
+  font-family: var(--serif);
+  font-size: 1.3rem;
+  font-weight: 380;
+  margin-top: 6px;
+  letter-spacing: -0.01em;
+}
+.holo-role {
+  font-size: 0.78rem;
+  color: var(--smoke);
+  margin-top: 2px;
+}
+.holo-stats {
+  display: flex;
+  gap: 18px;
+  margin: 14px 0;
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+  padding: 12px 0;
+}
+.holo-stats span {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  color: var(--smoke-2);
+  text-transform: uppercase;
+}
+.holo-stats b {
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  color: var(--gold);
+  margin-bottom: 2px;
+}
+.holo-lesson {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.92rem;
+  color: #d7cdbd;
+  line-height: 1.4;
+}
+
+/* Page épisode */
+.ep-page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding-inline: clamp(20px, 5vw, 40px);
+}
+.ep-hero h1 {
+  font-family: var(--serif);
+  font-weight: 340;
+  font-size: clamp(2rem, 6vw, 3.4rem);
+  line-height: 1.04;
+  letter-spacing: -0.015em;
+  margin: 10px 0 14px;
+}
+.ep-hero .ep-meta {
+  margin-bottom: 30px;
+}
+.ep-desc {
+  font-size: 1.05rem;
+  color: #cfc6b6;
+  max-width: 680px;
+  line-height: 1.7;
+  margin-bottom: 40px;
+}
+
+/* Page login */
+.auth-page {
+  max-width: 440px;
+  margin: 0 auto;
+  text-align: center;
+  padding-inline: 24px;
+}
+.auth-page .loader-lys,
+.auth-page svg.lys {
+  width: 64px;
+  height: 80px;
+  margin: 0 auto 24px;
+}
+.auth-page h1 {
+  font-family: var(--serif);
+  font-weight: 340;
+  font-size: clamp(1.8rem, 5vw, 2.6rem);
+  margin-bottom: 10px;
+}
+.auth-page .auth {
+  margin-top: 30px;
+}

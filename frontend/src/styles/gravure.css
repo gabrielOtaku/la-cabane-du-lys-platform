@@ -1,0 +1,69 @@
+/* ============================================================
+   GRAVURE & DORURE (famille d'animation n° 3, feuille de route §3)
+   Titres et contenu institutionnel : tracé discret d'une ligne, révélation
+   typographique et reflet bronze très limité — jamais de boucle décorative.
+   Déclenché par [data-reveal].in (ScrollReveal) ; inerte avec mouvement réduit.
+============================================================ */
+
+/* Gravure : la ligne de l'eyebrow se trace à l'arrivée du bloc */
+.sec-head[data-reveal] .eyebrow::before,
+.page-head[data-reveal] .eyebrow::before,
+.manifeste-col[data-reveal] .eyebrow::before {
+  width: 0;
+  transition: width var(--motion-engrave) var(--ease-standard) 120ms;
+}
+.sec-head[data-reveal].in .eyebrow::before,
+.page-head[data-reveal].in .eyebrow::before,
+.manifeste-col[data-reveal].in .eyebrow::before {
+  width: 34px;
+}
+
+/* Dorure : un seul reflet bronze traverse le mot italique du titre, puis se fige */
+.sec-head[data-reveal].in .sec-title em,
+.page-head[data-reveal].in .sec-title em,
+.hero .display em {
+  background-size: 220% 100%;
+  animation: dorure var(--motion-engrave) var(--ease-standard) 260ms 1 both;
+}
+@keyframes dorure {
+  from { background-position: 120% 0; }
+  to   { background-position: 0% 0; }
+}
+
+/* Matière (Madagascar) : trame tissée très discrète sous le Manifeste, terre rouge */
+.manifeste {
+  position: relative;
+}
+.manifeste::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.045;
+  background:
+    repeating-linear-gradient(45deg, var(--terre) 0 1.5px, transparent 1.5px 16px),
+    repeating-linear-gradient(-45deg, var(--terre) 0 1.5px, transparent 1.5px 16px);
+  mask-image: radial-gradient(70% 80% at 50% 50%, #000 30%, transparent 100%);
+  -webkit-mask-image: radial-gradient(70% 80% at 50% 50%, #000 30%, transparent 100%);
+}
+
+/* Territoire (Québec) : voile de brume hivernale sur les vitrines de La Salle */
+.salle {
+  background-image: linear-gradient(180deg, var(--brume), transparent 40%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sec-head[data-reveal] .eyebrow::before,
+  .page-head[data-reveal] .eyebrow::before,
+  .manifeste-col[data-reveal] .eyebrow::before {
+    width: 34px;
+    transition: none;
+  }
+  .sec-head[data-reveal].in .sec-title em,
+  .page-head[data-reveal].in .sec-title em,
+  .hero .display em {
+    animation: none;
+    background-size: auto;
+  }
+}

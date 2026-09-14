@@ -11,4 +11,6 @@ import java.util.UUID;
 public interface DropRepository extends JpaRepository<Drop, UUID> {
     List<Drop> findAllByLifecycle(DropLifecycle lifecycle);
     Optional<Drop> findBySlug(String slug);
+    boolean existsBySlug(String slug);
+    boolean existsBySlugAndIdNot(String slug, UUID id);
 }

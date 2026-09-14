@@ -23,8 +23,6 @@ la-cabane-du-lys-platform/
 | **Back-end** | Java 21 (Temurin), Spring Boot 3.2.5, Spring Security 6, JJWT 0.12, WebAuthn4J 0.22, Spring Data JPA, Flyway, Stripe Java 25.12, Spring Mail |
 | **Données / Infra** | PostgreSQL 16, Redis 7, Docker Compose, Testcontainers (tests d'intégration), H2 (profil dev) |
 
-> Le Dockerfile du backend cible encore Temurin 25 : à aligner sur 21 avant tout déploiement (backlog P1).
-
 ---
 
 ## Démarrage rapide
@@ -71,7 +69,7 @@ stripe trigger checkout.session.completed
 ### Vérifications
 
 ```bash
-# backend : tests unitaires + flux d'authentification + boutique (H2)
+# backend : tests unitaires + flux d'authentification + boutique + back office (H2)
 cd backend && mvn test -Dtest='!EpisodeServiceIT'
 # backend : test d'intégration PostgreSQL réel (Docker requis)
 cd backend && mvn test -Dtest=EpisodeServiceIT
@@ -81,7 +79,7 @@ cd frontend && npm run typecheck && npm run lint && npm run build
 
 ---
 
-## Ce qui est en place (V2, phases 0 à 4)
+## Ce qui est en place (V2, phases 0 à 7)
 
 | Domaine | État | Détail |
 | --- | --- | --- |
@@ -90,11 +88,12 @@ cd frontend && npm run typecheck && npm run lint && npm run build
 | Boutique | ✅ | Entité `Drop` (dates persistées, cycle de vie DRAFT/PUBLISHED/ARCHIVED, état SCHEDULED/OPEN/CLOSED dérivé), réservation de stock transactionnelle avec verrou de ligne avant Stripe, limite par client, expiration automatique, webhooks idempotents, montant vérifié côté serveur. |
 | Audio | ✅ | Moteur unique (`features/audio`) : un seul élément audio, analyse fréquentielle réelle, lecture persistante pendant la navigation, mini lecteur, transcription synchronisée navigable, clavier et mouvement réduit. |
 | Identité interactive | ✅ | Curseur fleur de lys (symbole SVG partagé, 16 px), modes lien/bouton/texte/lecture/3D, lucioles au clic (6 à 9, 400 à 800 ms) avec variante Play ; désactivé sur tactile et mouvement réduit. |
-| Accueil | 🔶 | Hero V2 recentré (proposition, appel principal, appel secondaire) et bandeau de preuves réelles. Tokens de mouvement posés. Système culturel et guide DA à compléter (phase 5). |
-| Données | 🔶 | API source de vérité ; fixtures locales limitées au développement ; états Skeleton/Erreur/Vide réutilisables. Découpage complet de `globals.css` à poursuivre (phase 6). |
-| Back office | ⏳ | `GET /admin/overview` (compteurs) seulement. Édition des contenus et des drops : phase 7. |
+| Accueil | ✅ | Hero V2 (proposition, appel principal, appel secondaire), preuves réelles, tokens documentés, trois familles d'animation, système culturel discret. Guide : `docs/DIRECTION_ARTISTIQUE.md`. |
+| Données | ✅ | API source de vérité ; fixtures locales limitées au développement ; états Skeleton/Erreur/Vide réutilisables ; CSS découpé par section dans `src/styles/` (voir `globals.css`). |
+| Back office | ✅ | `/admin` : épisodes (brouillons, publication, transcription), invités, drops (dates, cycle de vie, pièces), pièces et stock, commandes, journal d'audit. Validation serveur affichée par champ, confirmations avant actions sensibles. |
 
 Routes publiques : `/`, `/episodes`, `/episodes/[slug]`, `/invites`, `/invites/[slug]`, `/a-propos`, `/participer`, `/contact`, `/login`, `/login/callback`, `/drop`, `/drop/success`, `/hall-of-fame`.
+Back office (rôle ADMIN) : `/admin`, `/admin/episodes`, `/admin/invites`, `/admin/drops`, `/admin/produits`, `/admin/commandes`, `/admin/journal`. Le premier administrateur se crée en base après une première connexion par lien magique : `UPDATE users SET role = 'ADMIN' WHERE email = '…';`
 
 ## API (résumé)
 
@@ -112,6 +111,12 @@ Routes publiques : `/`, `/episodes`, `/episodes/[slug]`, `/invites`, `/invites/[
 | GET | `/shop/orders/{id}/status` | public | État d'une commande (aucune donnée personnelle) |
 | POST | `/shop/webhook` | Stripe (signé) | `checkout.session.completed` / `expired` / `async_payment_failed` |
 | GET | `/admin/overview` | ADMIN | Compteurs |
+| CRUD | `/admin/episodes`, `/admin/episodes/{id}/publish` · `/unpublish` | ADMIN | Épisodes, brouillons inclus |
+| CRUD | `/admin/guests` | ADMIN | Invités |
+| CRUD | `/admin/drops`, `/admin/drops/{id}/lifecycle` | ADMIN | Drops et cycle de vie |
+| CRUD | `/admin/products` | ADMIN | Pièces et stock |
+| GET / POST | `/admin/orders`, `/admin/orders/{id}/fulfill` | ADMIN | Commandes |
+| GET | `/admin/audit` | ADMIN | Journal d'audit |
 
 ## Sécurité — décisions
 

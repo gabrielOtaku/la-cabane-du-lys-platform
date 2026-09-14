@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.Collections;
@@ -34,6 +35,7 @@ public class EpisodeService {
      * jamais ici.
      */
     @Cacheable("episodes")
+    @Transactional(readOnly = true) // les invités sont chargés paresseusement : une session est requise (open-in-view=false)
     public List<EpisodeDto> findAll() {
         return repo.findAllByStatusOrderByNumberDesc(EpisodeStatus.PUBLISHED).stream()
                 .map(e -> EpisodeDto.from(e, parseTranscript(e))).toList();
@@ -51,6 +53,7 @@ public class EpisodeService {
      * Accepte un slug humain ou, en repli, un UUID brut. Ne résout que les épisodes
      * publiés.
      */
+    @Transactional(readOnly = true)
     public EpisodeDto findBySlug(String slug) {
         Episode e = repo.findBySlugAndStatus(slug, EpisodeStatus.PUBLISHED)
                 .or(() -> SlugUtils.tryParseUuid(slug)
@@ -67,6 +70,7 @@ public class EpisodeService {
      * Recherche plein texte via PostgreSQL tsvector. Retourne [] si le profil dev
      * (H2) est actif.
      */
+    @Transactional(readOnly = true)
     public List<EpisodeDto> search(String q) {
         if (!StringUtils.hasText(q))
             return List.of();

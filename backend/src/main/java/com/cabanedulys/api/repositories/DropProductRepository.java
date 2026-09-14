@@ -14,4 +14,8 @@ public interface DropProductRepository extends JpaRepository<DropProduct, UUID> 
     List<DropProduct> findAllByDropIdOrderByDisplayOrderAsc(UUID dropId);
 
     Optional<DropProduct> findByDropIdAndProductId(UUID dropId, UUID productId);
+
+    List<DropProduct> findAllByProductId(UUID productId);
+
+    void deleteAllByDropId(UUID dropId);
 }

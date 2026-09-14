@@ -4,7 +4,7 @@
 > Ce fichier est le backlog vivant demandé par la feuille de route (« mettre à jour la colonne Statut chaque semaine »).
 > Légende : `[x]` fait et vérifié (tests / build verts) · `[~]` partiel · `[ ]` à faire.
 
-Dernière mise à jour : 2026-09-12 (branche `v2`).
+Dernière mise à jour : 2026-09-14 (branche `v2`).
 
 ---
 
@@ -20,11 +20,11 @@ Dernière mise à jour : 2026-09-12 (branche `v2`).
 | `npm run lint` | vert |
 | Lighthouse | **non mesuré** : nécessite un navigateur et le site lancé ; à faire en préproduction (phase 8) |
 
-**Après la V2 (même jour)**
+**Après la V2 (2026-09-12 puis 2026-09-14)**
 
 | Vérification | Résultat |
 | --- | --- |
-| `mvn test -Dtest='!EpisodeServiceIT'` | 32 tests verts : JWT (5), flux d'identité (16), boutique (9), webhook (2) |
+| `mvn test -Dtest='!EpisodeServiceIT'` | 40 tests verts : JWT (5), flux d'identité (16), boutique (9), webhook (2), back office (8) |
 | `npm run typecheck` · `npm run lint` · `npm run build` | verts |
 
 **Fonctions incomplètes connues** : passkeys sans Redis (indisponibles en profil dev), envoi SMTP non testé en conditions réelles, Hall of Fame 3D sans alternative HTML, page `/confidentialite` absente, favicon / OG / sitemap absents.
@@ -62,7 +62,7 @@ Dernière mise à jour : 2026-09-12 (branche `v2`).
 - [x] Prix et produit vérifiés côté serveur ; montant reçu comparé au montant attendu
 - [x] Test « deux achats simultanés sur le dernier article »
 - [x] Page `/drop` sur l'API réelle (compte à rebours qui atteint zéro, états NONE/SCHEDULED/OPEN/CLOSED) et page `/drop/success`
-- [ ] Administration des drops (dates, publication) — phase 7 ; en attendant, `lifecycle` se change en base
+- [x] Administration des drops (dates, publication) — livrée en phase 7 (`/admin/drops`)
 
 ## Phase 3 — Lecteur audio unifié
 
@@ -91,23 +91,34 @@ Dernière mise à jour : 2026-09-12 (branche `v2`).
 
 - [x] Hero réécrit : proposition de valeur, appel principal, appel secondaire
 - [x] Promesses génériques remplacées par des preuves réelles (`HeroProof`)
-- [~] Tokens : mouvement (`--motion-*`, `--ease-standard`, `--glow-*`) posés ; couleur/typo/espace existants dans `globals.css`, non encore documentés
-- [~] Familles d'animation : braise (lecteur) et luciole (clic) en place ; gravure/dorure à formaliser
-- [ ] Système culturel Québec / France / Madagascar
-- [ ] Réduction des couches d'effets ; déclinaison mobile / tablette / grand écran à revoir
+- [x] Tokens couleur, culture, espace, rayon, ombre/verre, mouvement et couches dans `styles/base/tokens.css`, documentés dans `docs/DIRECTION_ARTISTIQUE.md`
+- [x] Trois familles d'animation : braise (lecteur), luciole (clic), gravure & dorure (`styles/gravure.css` : tracé de l'eyebrow, reflet unique des titres)
+- [x] Système culturel : Québec (brume sur La Salle, lys), France (composition éditoriale), Madagascar (terre rouge, trame tissée du Manifeste) — tokens et guide
+- [x] Champ de braises en pause hors du Hero et onglet caché
+- [ ] Déclinaison mobile / tablette / grand écran à vérifier visuellement
 
 ## Phase 6 — Données et modularisation frontend
 
 - [x] API source de vérité ; fixtures limitées au développement (`lib/fixtures.ts`)
 - [x] Clés TanStack Query et stale time documentés (`lib/queries.ts`)
 - [x] `Skeleton`, `ErrorState`, `EmptyState` réutilisables
-- [~] CSS : nouveaux styles dans `src/styles/` (`v2.css`, `audio.css`, `cursor.css`) ; `globals.css` (57 Ko) à découper
-- [ ] Chargement dynamique de la 3D hors Hero ; dépendances inutilisées à vérifier
+- [x] `globals.css` découpé en 14 fichiers `styles/base/*.css` importés dans l'ordre (concaténation vérifiée identique à l'octet) ; `globals.css` ne contient plus que les directives Tailwind et la table des matières
+- [x] 3D chargée dynamiquement (`EmberFieldWrapper`, page Hall of Fame) ; champ de braises mis en pause hors écran
+- [ ] Dépendances inutilisées à vérifier (`clsx`, `tailwind-merge` : `cn()` n'est plus appelé)
 - [x] Types frontend alignés sur les DTO backend (Session, DropDto, Product.remaining, OrderStatus)
 
 ## Phase 7 — Back office
 
-- [~] `GET /admin/overview` (compteurs) ; navigation, édition des épisodes/invités/drops, journal d'audit à faire
+- [x] Navigation administrateur protégée (`/admin`, garde d'affichage par rôle + protection serveur `/admin/**` ADMIN)
+- [x] Épisodes : liste (brouillons inclus), création, édition, invités liés, transcription (« mm:ss | texte »), publication / dépublication, suppression
+- [x] Invités : liste, création, édition, suppression (refusée si lié à un épisode)
+- [x] Drops : liste, création, édition (dates, limite par client, pièces), cycle de vie DRAFT / PUBLISHED / ARCHIVED avec règles de publication
+- [x] Pièces : création, édition (stock jamais sous les réservations actives), activation, suppression
+- [x] Commandes : liste avec états de paiement, marquage « expédiée » ; aucune donnée inutile exposée
+- [x] Validation serveur (422 avec violations par champ) affichée sous chaque champ ; confirmations avant actions sensibles
+- [x] Journal d'audit (`audit_events`, migration V7) alimenté par chaque mutation, consultable dans `/admin/journal`
+- [x] Tests `AdminApiTest` : 401/403, validation, publication reflétée publiquement, drop programmé reflété sur `/shop/drop`, règles de publication
+- [ ] Téléversement de médias (images, audio) : les champs acceptent des URL ; un stockage de fichiers reste à choisir (phase 8)
 
 ## Phase 8 — Qualité et lancement
 
@@ -134,12 +145,12 @@ Dernière mise à jour : 2026-09-12 (branche `v2`).
 | P1 | Audio | Synchroniser la transcription | Phase 3 | Fait |
 | P1 | Design | Créer le curseur fleur de lys | Phase 4 | Fait |
 | P1 | Design | Créer les lucioles et modes accessibles | Phase 4 | Fait |
-| P1 | Accueil | Réviser Hero et preuves | Phase 5 | Fait (à affiner) |
-| P1 | Design | Formaliser tokens et familles d'animation | Phase 5 | En cours |
+| P1 | Accueil | Réviser Hero et preuves | Phase 5 | Fait |
+| P1 | Design | Formaliser tokens et familles d'animation | Phase 5 | Fait |
 | P1 | Données | Supprimer les fallbacks locaux en production | Phase 6 | Fait |
-| P1 | CSS | Découper globals.css | Phase 6 | En cours |
-| P2 | Admin | Gérer épisodes, invités et transcriptions | Phase 7 | À faire |
-| P2 | Admin | Gérer drops, produits et stock | Phase 7 | À faire |
+| P1 | CSS | Découper globals.css | Phase 6 | Fait |
+| P2 | Admin | Gérer épisodes, invités et transcriptions | Phase 7 | Fait |
+| P2 | Admin | Gérer drops, produits et stock | Phase 7 | Fait |
 | P2 | Qualité | Ajouter CI, préproduction et observabilité | Phase 8 | À faire |
 | P2 | SEO | Ajouter métadonnées et cartes de partage | Phase 8 | À faire |
 | P3 | Produit | Évaluer flux RSS et statistiques d'écoute | Après V2 | À évaluer |

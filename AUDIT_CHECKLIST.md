@@ -82,7 +82,7 @@ Légende : `[ ]` à faire · `[~]` en cours / partiel · `[x]` fait et vérifié
 
 ### Performance
 - [ ] Réduire/limiter le préloader
-- [ ] Limiter EmberField (WebGL global) au Hero, pause hors-écran/onglet caché, qualité mobile réduite
+- [x] EmberField : pause hors du Hero (IntersectionObserver) et onglet caché, particules réduites sur mobile (2026-09-14)
 
 ### Légal
 - [ ] Politique de confidentialité pour formulaires/analytics (page `/confidentialite`)
@@ -103,13 +103,13 @@ Légende : `[ ]` à faire · `[~]` en cours / partiel · `[x]` fait et vérifié
 - [ ] Optimisation images (`next/image`, AVIF/WebP) + monitoring Core Web Vitals
 - [ ] Page `/partenaires`
 - [ ] Kit média / dossier du podcast
-- [ ] Aligner `backend/Dockerfile` (Temurin 25 → 21)
+- [x] Aligner `backend/Dockerfile` (Temurin 25 → 21) — fait le 2026-09-14
 
 ---
 
 ## P2 — Croissance
 - [ ] Newsletter avec stratégie éditoriale réelle
-- [ ] Espace administration/CMS
+- [x] Espace administration/CMS — `/admin` (2026-09-14, feuille de route phase 7)
 - [ ] Recommandations d'épisodes liés
 - [ ] Automatisation partielle des stats plateformes (avec sources)
 - [ ] Espace ressources / apprentissages
@@ -202,3 +202,4 @@ Légende : `[ ]` à faire · `[~]` en cours / partiel · `[x]` fait et vérifié
 | 2026-08-20 | Frontend : types, données, routing `/episodes/[slug]`, Coffre/Salle/Diffusion réécrits, nav réelle, Cercle/Réserve masqués, 6 nouvelles pages créées | `npm run build` vert (16 routes, type-check + lint passés) |
 | 2026-08-20 | Confirmations reçues : lien Spotify = profil personnel voulu (OK) ; email de contact réel = lacabanedulys@gmail.com (mis à jour dans /contact et /participer) ; bios sourcées des sites officiels via WebFetch, nom complet de Corentin confirmé (Corentin Guyon) | Photos toujours absentes (non fournies par les invités) — `photoUrl` reste vide, pas de visuel générique. Favicon/image OG toujours à faire (SEO). Build backend + frontend revalidés verts après ces changements. |
 | 2026-09-12 | Feuille de route V2, phases 0 à 4 (+ début 5/6) sur la branche `v2` : lien magique réel + cookie HttpOnly + rôles + CSRF ; entité Drop, réservation de stock, webhooks idempotents ; moteur audio unique + mini lecteur + transcription ; curseur fleur de lys + lucioles ; Hero V2 avec preuves réelles ; fixtures limitées au dev ; états d'interface | Suivi détaillé : `docs/ROADMAP_STATUS.md`. 32 tests backend verts (H2), `npm run build` vert (18 routes). Java 21 conservé (Boot 3.2.5 non compatible Java 25). Un run Copilot « Java upgrade » a auto-stashé le travail d'août en cours de session : restauré via `git stash apply`, le stash est conservé en sauvegarde. |
+| 2026-09-14 | Phases 5, 6 et 7 : tokens et guide de direction artistique, famille gravure & dorure, système culturel discret, `globals.css` découpé en 14 fichiers (concaténation identique), pause du champ de braises hors écran, back office complet (épisodes, invités, drops, pièces, commandes, journal d'audit, migration V7) | `AdminApiTest` (8 tests) ; suite backend et build frontend verts. Reste : téléversement de médias, CI, préproduction (phase 8). |

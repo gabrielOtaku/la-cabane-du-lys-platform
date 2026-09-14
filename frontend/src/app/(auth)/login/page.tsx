@@ -89,6 +89,9 @@ export default function LoginPage() {
               >
                 <LogOut size={15} /> Se déconnecter
               </button>
+              {session.role === "ADMIN" && (
+                <Link href="/admin" className="btn btn-solid" style={{ justifyContent: "center" }}>Ouvrir le back office</Link>
+              )}
               <p className="auth-note">Une passkey permet de revenir sans courriel, avec Face ID, Touch ID ou une clé physique.</p>
             </div>
           </>

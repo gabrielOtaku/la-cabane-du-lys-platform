@@ -1,0 +1,71 @@
+/* ============================================================
+   FOOTER
+============================================================ */
+.foot {
+  border-top: 1px solid var(--line);
+  padding: 80px 0 40px;
+  background: linear-gradient(rgba(8, 7, 5, 0), rgba(14, 10, 6, 0.6));
+}
+.foot-top {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 40px;
+  margin-bottom: 60px;
+}
+.foot-brand svg {
+  width: 40px;
+  height: 50px;
+  fill: url(#bz);
+  margin-bottom: 18px;
+}
+.foot-brand h3 {
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  font-weight: 400;
+  margin-bottom: 12px;
+}
+.foot-brand p {
+  font-size: 0.86rem;
+  color: var(--smoke);
+  max-width: 34ch;
+}
+.foot-col h5 {
+  font-size: 0.66rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--bronze);
+  margin-bottom: 20px;
+}
+.foot-col a {
+  display: block;
+  font-size: 0.88rem;
+  color: var(--smoke);
+  padding: 7px 0;
+  transition: 0.3s;
+}
+.foot-col a:hover {
+  color: var(--gold);
+}
+.foot-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-top: 30px;
+  border-top: 1px solid var(--line-soft);
+  font-size: 0.74rem;
+  color: var(--smoke-2);
+}
+.foot-bottom .loc {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.foot-bottom .loc svg {
+  width: 14px;
+  height: 14px;
+  stroke: var(--bronze-3);
+  fill: none;
+}
+
