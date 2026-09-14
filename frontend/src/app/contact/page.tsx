@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowLeft, Mail, Youtube } from "lucide-react";
+import { ArrowLeft, Mail } from "lucide-react";
+import { Youtube } from "@/components/ui/BrandIcons";
 import { PLATFORM_LINKS } from "@/lib/platforms";
 
 const CONTACT_EMAIL = "lacabanedulys@gmail.com";

@@ -13,7 +13,7 @@ export class AudioEngine {
   private el: HTMLAudioElement | null = null;
   private ctx: AudioContext | null = null;
   private analyser: AnalyserNode | null = null;
-  private freq: Uint8Array | null = null;
+  private freq: Uint8Array<ArrayBuffer> | null = null;
   private analyserFailed = false;
   private pendingSeek: number | null = null;
   private state: PlayerState = INITIAL_STATE;

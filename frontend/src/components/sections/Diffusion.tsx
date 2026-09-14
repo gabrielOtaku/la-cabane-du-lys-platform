@@ -1,4 +1,5 @@
-import { Youtube, AudioLines, Smartphone, ArrowRight } from "lucide-react";
+import { AudioLines, Smartphone, ArrowRight } from "lucide-react";
+import { Youtube } from "@/components/ui/BrandIcons";
 import { PLATFORM_LINKS } from "@/lib/platforms";
 
 const channels = [
