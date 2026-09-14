@@ -104,7 +104,7 @@ Dernière mise à jour : 2026-09-14 (branche `v2`).
 - [x] `Skeleton`, `ErrorState`, `EmptyState` réutilisables
 - [x] `globals.css` découpé en 14 fichiers `styles/base/*.css` importés dans l'ordre (concaténation vérifiée identique à l'octet) ; `globals.css` ne contient plus que les directives Tailwind et la table des matières
 - [x] 3D chargée dynamiquement (`EmberFieldWrapper`, page Hall of Fame) ; champ de braises mis en pause hors écran
-- [ ] Dépendances inutilisées à vérifier (`clsx`, `tailwind-merge` : `cn()` n'est plus appelé)
+- [x] `clsx` et `tailwind-merge` retirés le 2026-09-14 (`cn()` n'était plus appelé)
 - [x] Types frontend alignés sur les DTO backend (Session, DropDto, Product.remaining, OrderStatus)
 
 ## Phase 7 — Back office
@@ -126,6 +126,8 @@ Dernière mise à jour : 2026-09-14 (branche `v2`).
 - [ ] Environnements dev / préprod / prod ; logs structurés déjà prêts (profil `docker`/`prod`)
 - [x] Audit des dépendances (2026-09-14) : Next 15.5.25 + overrides `postcss`/`fflate` → `npm audit` à zéro ; Spring Boot 3.2.5 → 3.5.16 (Flyway 11 + module PostgreSQL, JJWT 0.12.7, logstash-logback-encoder 8.1) ; images Docker Alpine, `apk upgrade`, non-root, `.dockerignore` ; Tomcat 10.1.59, Netty 4.1.138, PostgreSQL 42.7.13, Jackson 2.21.6, Log4j API 2.25.5 épinglés ; frontend « standalone » sans npm. Docker Scout : backend 110 → 4 (0 critique, 0 élevée, coreutils/gnupg sans correctif), frontend 19 → 0
 - [x] Bibliothèques backend au plus récent (2026-09-14) : Stripe 33.4.2, WebAuthn4J 0.31.10 (API migrée, plus d'appel déprécié), JJWT 0.13.0, Logstash encoder 9.0, Jackson 2.22.2
+- [x] Paquets frontend au plus récent de leur majeure (2026-09-14) : TanStack Query 5.102, Lenis 1.3, lucide-react 1.46 (logos retirés de lucide 1.x : icône YouTube locale dans `components/ui/BrandIcons.tsx`), Framer Motion 11.18, Zustand 4.5.7, TypeScript 5.9, ESLint 9.39, Tailwind 3.4.19, @types/node 22
+- [ ] Majeures frontend à migrer en une seule vague : React 19 + Next 16 + React Three Fiber 9 + Drei 10 + Three 0.186 + Framer Motion 13 + Zustand 5 + Tailwind 4 + TypeScript 7 + ESLint 10 — pile 3D et CSS à revalider visuellement
 - [ ] Audits Lighthouse, accessibilité, en-têtes
 - [ ] Sauvegardes, restauration, retour arrière
 - [x] Spring Boot 3.5.16 adopté (2026-09-14) ; Java 25 reste à évaluer (Boot 3.5 le prend en charge, JDK 25 non installé)
@@ -161,6 +163,7 @@ Dernière mise à jour : 2026-09-14 (branche `v2`).
 
 - **Java 21 conservé, Spring Boot 3.5.16 adopté (2026-09-14).** Spring Boot 3.2 n'est plus maintenu et embarquait des CVE critiques (Tomcat, Spring Security, Spring Framework). Boot 3.5 tourne sur Java 21 sans changement de code ; seule adaptation : le module `flyway-database-postgresql` (Flyway 10+). Java 25 pourra suivre quand le JDK sera installé.
 - **WebAuthn4J 0.31 et Jackson.** WebAuthn4J embarque Jackson 3 (`tools.jackson`), qui coexiste avec le Jackson 2 de Spring mais exige `jackson-annotations` ≥ 2.22 ; d'où `jackson-bom` 2.22.2. Sans cela, la première passkey échouait à l'exécution (constaté par `WebAuthnFlowTest`).
+- **Majeures frontend reportées.** React 19 impose Next 16, React Three Fiber 9 et Drei 10 ; Tailwind 4 change la configuration CSS ; TypeScript 7 change le compilateur. Ces montées se font ensemble, avec vérification visuelle du Hero 3D et des animations, hors du périmètre sécurité (aucune vulnérabilité ouverte sur les versions actuelles).
 - **Dépendances transitives épinglées par `overrides` npm.** Next 15.5 épingle `postcss` 8.4.31 et three-stdlib `fflate` 0.6 ; les overrides forcent les versions corrigées, vérifiées par le build. À retirer quand les dépendances amont auront bougé.
 - **Connexion par passkey sans courriel.** Le défi est identifié par un `challengeId` aléatoire ; l'authentificateur désigne le compte. Cela supprime l'énumération des comptes à la connexion.
 - **État du drop dérivé des dates.** Une seule source de vérité (`lifecycle` + dates), aucune colonne d'état stockée qui pourrait contredire le compte à rebours.

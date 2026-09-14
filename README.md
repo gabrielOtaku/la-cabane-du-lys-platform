@@ -12,14 +12,14 @@ Suivi d'avancement : [docs/ROADMAP_STATUS.md](docs/ROADMAP_STATUS.md). Variables
 
 ```
 la-cabane-du-lys-platform/
-├── frontend/   → Next.js 15.5 (App Router) · React 18.3 · TypeScript 5.5 · TanStack Query 5 · Zustand · Framer Motion · Lenis · R3F
+├── frontend/   → Next.js 15.5 (App Router) · React 18.3 · TypeScript 5.9 · TanStack Query 5 · Zustand · Framer Motion · Lenis · R3F
 ├── backend/    → Java 21 · Spring Boot 3.5.16 · Spring Security · JPA/Hibernate · Flyway · PostgreSQL 16 · Redis 7 · Stripe · WebAuthn4J
 └── docs/       → environnement, backlog, décisions
 ```
 
 | Couche | Pile réelle (package.json / pom.xml) |
 | --- | --- |
-| **Front-end** | Next.js 15.5.25, React 18.3.1, TypeScript 5.5.3, Tailwind 3.4, Framer Motion 11, Lenis 1.1, Three 0.166 + React Three Fiber 8 + Drei 9, Zustand 4.5, TanStack Query 5.51, lucide-react |
+| **Front-end** | Next.js 15.5.25, React 18.3.1, TypeScript 5.9, Tailwind 3.4, Framer Motion 11.18, Lenis 1.3, Three 0.166 + React Three Fiber 8 + Drei 9, Zustand 4.5, TanStack Query 5.102, lucide-react 1.46 |
 | **Back-end** | Java 21 (Temurin), Spring Boot 3.5.16, Spring Security 6.5, Jackson 2.22, JJWT 0.13, WebAuthn4J 0.31, Spring Data JPA, Flyway 11 (module PostgreSQL), Stripe Java 33.4, Spring Mail, Logstash encoder 9 |
 | **Données / Infra** | PostgreSQL 16, Redis 7, Docker Compose, Testcontainers (tests d'intégration), H2 (profil dev) |
 
