@@ -79,8 +79,8 @@ Dernière mise à jour : 2026-09-14 (branche `v2`).
 ## Phase 4 — Identité interactive
 
 - [x] Symbole SVG `#lysmark` réutilisé, point blanc supprimé
-- [x] Fleur de 16 px sur bureau
-- [x] Halo avec inertie, transformations limitées (échelle ≤ 2)
+- [x] Fleur de 28 px sur bureau, seule (halo et anneau retirés le 2026-09-14 : « je veux juste la fleur »)
+- [x] Transformations limitées (échelle ≤ 1,2, inclinaison 8°), appui court au clic
 - [x] 6 à 9 lucioles par clic, 400 à 800 ms, trajectoires variées, disparition douce
 - [x] Modes lien, bouton, texte (curseur natif dans les champs), lecture, pause, 3D
 - [x] Désactivé sur tactile et mouvement réduit ; curseur natif conservé
@@ -124,9 +124,10 @@ Dernière mise à jour : 2026-09-14 (branche `v2`).
 
 - [ ] CI (lint, compilation, tests, migrations sur base vide)
 - [ ] Environnements dev / préprod / prod ; logs structurés déjà prêts (profil `docker`/`prod`)
-- [ ] Audits Lighthouse, accessibilité, dépendances, en-têtes
+- [x] Audit des dépendances (2026-09-14) : Next 15.5.25 + overrides `postcss`/`fflate` → `npm audit` à zéro ; Spring Boot 3.2.5 → 3.5.16 (Flyway 11 + module PostgreSQL, JJWT 0.12.7, logstash-logback-encoder 8.1) ; images Docker Alpine, `apk upgrade`, non-root, `.dockerignore` ; Tomcat 10.1.59, Netty 4.1.138, PostgreSQL 42.7.13, Jackson 2.21.6, Log4j API 2.25.5 épinglés ; frontend « standalone » sans npm. Docker Scout : backend 110 → 4 (0 critique, 0 élevée, coreutils/gnupg sans correctif), frontend 19 → 0
+- [ ] Audits Lighthouse, accessibilité, en-têtes
 - [ ] Sauvegardes, restauration, retour arrière
-- [ ] Évaluer Spring Boot 3.5 + Java 25 (décision : rester sur Java 21 pour la V2)
+- [x] Spring Boot 3.5.16 adopté (2026-09-14) ; Java 25 reste à évaluer (Boot 3.5 le prend en charge, JDK 25 non installé)
 
 ---
 
@@ -157,7 +158,8 @@ Dernière mise à jour : 2026-09-14 (branche `v2`).
 
 ## Décisions prises pendant la V2
 
-- **Java 21 conservé.** Spring Boot 3.2.5 n'est pas certifié Java 25 (Lombok, ByteBuddy/Hibernate, Mockito) et le JDK 25 n'est pas installé. La montée passe par Spring Boot 3.5+ : tâche de phase 8.
+- **Java 21 conservé, Spring Boot 3.5.16 adopté (2026-09-14).** Spring Boot 3.2 n'est plus maintenu et embarquait des CVE critiques (Tomcat, Spring Security, Spring Framework). Boot 3.5 tourne sur Java 21 sans changement de code ; seule adaptation : le module `flyway-database-postgresql` (Flyway 10+). Java 25 pourra suivre quand le JDK sera installé.
+- **Dépendances transitives épinglées par `overrides` npm.** Next 15.5 épingle `postcss` 8.4.31 et three-stdlib `fflate` 0.6 ; les overrides forcent les versions corrigées, vérifiées par le build. À retirer quand les dépendances amont auront bougé.
 - **Connexion par passkey sans courriel.** Le défi est identifié par un `challengeId` aléatoire ; l'authentificateur désigne le compte. Cela supprime l'énumération des comptes à la connexion.
 - **État du drop dérivé des dates.** Une seule source de vérité (`lifecycle` + dates), aucune colonne d'état stockée qui pourrait contredire le compte à rebours.
 - **Réservation avant Stripe, hors verrou réseau.** La réservation est validée dans sa propre transaction, puis la session Stripe est créée ; en cas d'échec Stripe, la réservation est libérée.
