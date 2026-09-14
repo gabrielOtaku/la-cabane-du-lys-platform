@@ -1,9 +1,26 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Manrope } from "next/font/google";
-import '../styles/globals.css';
+// Ordre significatif : voir le commentaire de globals.css (phase 6, styles modulaires).
+import "./globals.css";
+import "../styles/base/tokens.css";
+import "../styles/base/base.css";
+import "../styles/base/loader.css";
+import "../styles/base/nav.css";
+import "../styles/base/hero.css";
+import "../styles/base/manifeste.css";
+import "../styles/base/coffre.css";
+import "../styles/base/salle.css";
+import "../styles/base/cercle.css";
+import "../styles/base/reserve.css";
+import "../styles/base/diffusion.css";
+import "../styles/base/footer.css";
+import "../styles/base/responsive.css";
+import "../styles/base/pages.css";
+import "../styles/gravure.css";
 import "../styles/v2.css";
 import "../styles/audio.css";
 import "../styles/cursor.css";
+import "../styles/admin.css";
 
 import { Providers } from "@/components/layout/Providers";
 import { Preloader } from "@/components/layout/Preloader";

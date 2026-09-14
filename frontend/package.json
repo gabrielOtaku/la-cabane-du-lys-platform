@@ -2,7 +2,7 @@
   "name": "cabane-du-lys-frontend",
   "version": "1.0.0",
   "private": true,
-  "description": "La Cabane du Lys — front-end immersif (Next.js 14 / R3F).",
+  "description": "La Cabane du Lys — front-end immersif (Next.js 15 / R3F).",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -18,7 +18,7 @@
     "framer-motion": "11.3.8",
     "lenis": "1.1.6",
     "lucide-react": "0.408.0",
-    "next": "15.5.19",
+    "next": "^15.5.25",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "tailwind-merge": "2.4.0",
@@ -33,9 +33,15 @@
     "@types/three": "0.166.0",
     "autoprefixer": "10.4.19",
     "eslint": "^9.0.0",
-    "eslint-config-next": "^15.5.19",
-    "postcss": "^8.5.15",
+    "eslint-config-next": "^15.5.25",
+    "postcss": "^8.5.28",
     "tailwindcss": "3.4.6",
     "typescript": "5.5.3"
+  },
+  "overrides": {
+    "postcss": "$postcss",
+    "three-stdlib": {
+      "fflate": "^0.8.3"
+    }
   }
 }
