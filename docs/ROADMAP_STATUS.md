@@ -24,7 +24,7 @@ Dernière mise à jour : 2026-09-14 (branche `v2`).
 
 | Vérification | Résultat |
 | --- | --- |
-| `mvn test -Dtest='!EpisodeServiceIT'` | 40 tests verts : JWT (5), flux d'identité (16), boutique (9), webhook (2), back office (8) |
+| `mvn test -Dtest='!EpisodeServiceIT'` | 42 tests verts : JWT (5), flux d'identité (16), passkeys émulées (2), boutique (9), webhook (2), back office (8) |
 | `npm run typecheck` · `npm run lint` · `npm run build` | verts |
 
 **Fonctions incomplètes connues** : passkeys sans Redis (indisponibles en profil dev), envoi SMTP non testé en conditions réelles, Hall of Fame 3D sans alternative HTML, page `/confidentialite` absente, favicon / OG / sitemap absents.
@@ -49,7 +49,7 @@ Dernière mise à jour : 2026-09-14 (branche `v2`).
 - [x] Routes administratives protégées (`/admin/**` + `@PreAuthorize`)
 - [x] Déconnexion, révocation (`jti` en liste Redis) et sessions expirées (401 JSON)
 - [x] Tests : lien magique, réutilisation, expiration, 401, 403, rôle inconnu, jeton altéré, CSRF origine, Bearer
-- [~] WebAuthn : enregistrement réservé à une session vérifiée, connexion sans courriel — **non testé en conditions réelles (Redis + navigateur)**
+- [x] WebAuthn : enregistrement réservé à une session vérifiée, connexion sans courriel — flux complet testé avec l'authentificateur émulé de WebAuthn4J (`WebAuthnFlowTest`, 2026-09-14) ; passage sur navigateur réel à confirmer en préproduction
 
 ## Phase 2 — Drops, paiements et stock
 
@@ -125,6 +125,7 @@ Dernière mise à jour : 2026-09-14 (branche `v2`).
 - [ ] CI (lint, compilation, tests, migrations sur base vide)
 - [ ] Environnements dev / préprod / prod ; logs structurés déjà prêts (profil `docker`/`prod`)
 - [x] Audit des dépendances (2026-09-14) : Next 15.5.25 + overrides `postcss`/`fflate` → `npm audit` à zéro ; Spring Boot 3.2.5 → 3.5.16 (Flyway 11 + module PostgreSQL, JJWT 0.12.7, logstash-logback-encoder 8.1) ; images Docker Alpine, `apk upgrade`, non-root, `.dockerignore` ; Tomcat 10.1.59, Netty 4.1.138, PostgreSQL 42.7.13, Jackson 2.21.6, Log4j API 2.25.5 épinglés ; frontend « standalone » sans npm. Docker Scout : backend 110 → 4 (0 critique, 0 élevée, coreutils/gnupg sans correctif), frontend 19 → 0
+- [x] Bibliothèques backend au plus récent (2026-09-14) : Stripe 33.4.2, WebAuthn4J 0.31.10 (API migrée, plus d'appel déprécié), JJWT 0.13.0, Logstash encoder 9.0, Jackson 2.22.2
 - [ ] Audits Lighthouse, accessibilité, en-têtes
 - [ ] Sauvegardes, restauration, retour arrière
 - [x] Spring Boot 3.5.16 adopté (2026-09-14) ; Java 25 reste à évaluer (Boot 3.5 le prend en charge, JDK 25 non installé)
@@ -159,6 +160,7 @@ Dernière mise à jour : 2026-09-14 (branche `v2`).
 ## Décisions prises pendant la V2
 
 - **Java 21 conservé, Spring Boot 3.5.16 adopté (2026-09-14).** Spring Boot 3.2 n'est plus maintenu et embarquait des CVE critiques (Tomcat, Spring Security, Spring Framework). Boot 3.5 tourne sur Java 21 sans changement de code ; seule adaptation : le module `flyway-database-postgresql` (Flyway 10+). Java 25 pourra suivre quand le JDK sera installé.
+- **WebAuthn4J 0.31 et Jackson.** WebAuthn4J embarque Jackson 3 (`tools.jackson`), qui coexiste avec le Jackson 2 de Spring mais exige `jackson-annotations` ≥ 2.22 ; d'où `jackson-bom` 2.22.2. Sans cela, la première passkey échouait à l'exécution (constaté par `WebAuthnFlowTest`).
 - **Dépendances transitives épinglées par `overrides` npm.** Next 15.5 épingle `postcss` 8.4.31 et three-stdlib `fflate` 0.6 ; les overrides forcent les versions corrigées, vérifiées par le build. À retirer quand les dépendances amont auront bougé.
 - **Connexion par passkey sans courriel.** Le défi est identifié par un `challengeId` aléatoire ; l'authentificateur désigne le compte. Cela supprime l'énumération des comptes à la connexion.
 - **État du drop dérivé des dates.** Une seule source de vérité (`lifecycle` + dates), aucune colonne d'état stockée qui pourrait contredire le compte à rebours.

@@ -20,7 +20,7 @@ la-cabane-du-lys-platform/
 | Couche | Pile réelle (package.json / pom.xml) |
 | --- | --- |
 | **Front-end** | Next.js 15.5.25, React 18.3.1, TypeScript 5.5.3, Tailwind 3.4, Framer Motion 11, Lenis 1.1, Three 0.166 + React Three Fiber 8 + Drei 9, Zustand 4.5, TanStack Query 5.51, lucide-react |
-| **Back-end** | Java 21 (Temurin), Spring Boot 3.5.16, Spring Security 6.5, JJWT 0.12.7, WebAuthn4J 0.22, Spring Data JPA, Flyway 11 (module PostgreSQL), Stripe Java 25.12, Spring Mail |
+| **Back-end** | Java 21 (Temurin), Spring Boot 3.5.16, Spring Security 6.5, Jackson 2.22, JJWT 0.13, WebAuthn4J 0.31, Spring Data JPA, Flyway 11 (module PostgreSQL), Stripe Java 33.4, Spring Mail, Logstash encoder 9 |
 | **Données / Infra** | PostgreSQL 16, Redis 7, Docker Compose, Testcontainers (tests d'intégration), H2 (profil dev) |
 
 ---
@@ -69,7 +69,7 @@ stripe trigger checkout.session.completed
 ### Vérifications
 
 ```bash
-# backend : tests unitaires + flux d'authentification + boutique + back office (H2)
+# backend : tests unitaires + flux d'authentification + passkeys émulées + boutique + back office (H2)
 cd backend && mvn test -Dtest='!EpisodeServiceIT'
 # backend : test d'intégration PostgreSQL réel (Docker requis)
 cd backend && mvn test -Dtest=EpisodeServiceIT
@@ -84,7 +84,7 @@ cd frontend && npm run typecheck && npm run lint && npm run build
 | Domaine | État | Détail |
 | --- | --- | --- |
 | Identité | ✅ | Lien magique à usage unique (SHA-256 en base, 15 min, un seul clic), session en cookie **HttpOnly · Secure · SameSite=Lax**, révocation à la déconnexion, rôle lu et validé depuis le jeton, `/admin/**` réservé au rôle ADMIN, 401/403 en JSON RFC 7807, protection CSRF par vérification d'origine. |
-| Passkeys | ✅ | Enregistrement réservé à une session ouverte (adresse vérifiée) ; connexion sans courriel (credential discoverable), aucune énumération de comptes. |
+| Passkeys | ✅ | Enregistrement réservé à une session ouverte (adresse vérifiée) ; connexion sans courriel (credential discoverable), aucune énumération de comptes. Flux complet couvert par `WebAuthnFlowTest` avec l'authentificateur émulé de WebAuthn4J. |
 | Boutique | ✅ | Entité `Drop` (dates persistées, cycle de vie DRAFT/PUBLISHED/ARCHIVED, état SCHEDULED/OPEN/CLOSED dérivé), réservation de stock transactionnelle avec verrou de ligne avant Stripe, limite par client, expiration automatique, webhooks idempotents, montant vérifié côté serveur. |
 | Audio | ✅ | Moteur unique (`features/audio`) : un seul élément audio, analyse fréquentielle réelle, lecture persistante pendant la navigation, mini lecteur, transcription synchronisée navigable, clavier et mouvement réduit. |
 | Identité interactive | ✅ | Curseur fleur de lys seule (symbole SVG partagé, 28 px, sans halo), modes lien/bouton/texte/lecture/3D exprimés par l'échelle et l'inclinaison, lucioles au clic (6 à 9, 400 à 800 ms) avec variante Play ; désactivé sur tactile et mouvement réduit. |
@@ -125,5 +125,5 @@ Back office (rôle ADMIN) : `/admin`, `/admin/episodes`, `/admin/invites`, `/adm
 - **Rate limiting** : par route et par IP (Redis, fenêtre fixe) ; `X-Forwarded-For` ignoré sauf `TRUST_FORWARDED_FOR=true` derrière un proxy de confiance.
 - **Paiement** : prix et quantités calculés côté serveur ; webhook signé ; un identifiant d'événement n'est traité qu'une fois.
 - **Secrets** : jamais dans Git ; valeurs par défaut volontairement reconnaissables (`replace_me`).
-- **Dépendances** : `npm audit` à zéro (Next 15.5.25 ; `overrides` npm pour `postcss` et `fflate`, épinglés par des dépendances transitives) ; Spring Boot 3.5.16 (Spring Security 6.5.11, Spring Framework 6.2.19) avec Tomcat 10.1.59, Netty 4.1.138, pilote PostgreSQL 42.7.13, Jackson 2.21.6 et Log4j API 2.25.5 épinglés dans le `pom.xml` (à retirer quand Boot les rattrape). Vérifier après chaque montée : `cd frontend && npm audit`, `docker scout cves <image>`.
+- **Dépendances** : `npm audit` à zéro (Next 15.5.25 ; `overrides` npm pour `postcss` et `fflate`, épinglés par des dépendances transitives) ; Spring Boot 3.5.16 (Spring Security 6.5.11, Spring Framework 6.2.19) avec Tomcat 10.1.59, Netty 4.1.138, pilote PostgreSQL 42.7.13, Jackson 2.22.2 et Log4j API 2.25.5 épinglés dans le `pom.xml` (à retirer quand Boot les rattrape) ; Stripe, WebAuthn4J, JJWT et Logstash encoder à leur dernière version. Vérifier après chaque montée : `cd frontend && npm audit`, `docker scout cves <image>`.
 - **Images Docker** : bases Alpine (`eclipse-temurin:21-jre-alpine`, `node:22-alpine`), paquets système mis à jour au build, processus non-root ; frontend en sortie Next « standalone » sans npm à l'exécution (328 Mo, 0 vulnérabilité Docker Scout) ; backend 466 Mo, 0 critique / 0 élevée (reste coreutils et gnupg Alpine, sans correctif publié). Reconstruire avec `docker compose build --pull` pour récupérer les dernières bases.
