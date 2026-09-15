@@ -37,6 +37,14 @@ app:
   features:
     magic-link-enabled: true
 
+# Observabilité : les identifiants de trace restent dans les logs, mais rien n'est envoyé à Zipkin.
+# Sans ce réglage, chaque export échoue en boucle sur localhost:9411 (Zipkin n'est pas lancé en local).
+management:
+  zipkin:
+    tracing:
+      export:
+        enabled: false
+
 logging:
   level:
     com.cabanedulys: DEBUG

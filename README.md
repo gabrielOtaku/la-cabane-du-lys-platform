@@ -48,6 +48,7 @@ mvn spring-boot:run        # profil dev activé par le plugin
 ```
 
 Sans Redis : le rate limiting et la révocation de session sont en *fail-open* (documenté), les passkeys sont indisponibles. Le lien magique est écrit dans la console (`MAIL_MODE=log`).
+Le traçage reste actif dans les logs (identifiants de trace), mais rien n'est envoyé à Zipkin : l'export est désactivé dans le profil `dev` (`management.zipkin.tracing.export.enabled=false`).
 
 **Frontend** :
 
