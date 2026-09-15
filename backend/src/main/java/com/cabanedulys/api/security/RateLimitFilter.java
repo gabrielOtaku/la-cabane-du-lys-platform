@@ -1,6 +1,5 @@
 package com.cabanedulys.api.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -8,40 +7,49 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ProblemDetail;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.net.URI;
 import java.time.Duration;
-import java.util.Set;
+import java.util.Map;
 
 /**
- * Bouclier anti-abus : limite le débit par IP sur les endpoints sensibles.
+ * Bouclier anti-abus : limite le débit par route et par IP sur les endpoints sensibles.
  * Algorithme : fenêtre fixe Redis (INCR + EXPIRE). Fail-open si Redis indisponible.
+ *
+ * <p>Les limites sont exprimées en multiples de {@code app.rate-limit.max-requests}
+ * (5 par minute par défaut) : lien magique ×1, vérifications et paiement ×2, recherche ×12.</p>
  */
 @Component
 public class RateLimitFilter extends OncePerRequestFilter {
 
-    private static final Set<String> PROTECTED = Set.of("/auth/magic-link", "/shop/checkout");
-
     private final StringRedisTemplate redis;
-    private final ObjectMapper mapper;
-    private final int maxRequests;
+    private final ApiSecurityErrors errors;
     private final Duration window;
+    private final boolean trustForwardedFor;
+    private final Map<String, Integer> limits;
 
     public RateLimitFilter(
             StringRedisTemplate redis,
-            ObjectMapper mapper,
+            ApiSecurityErrors errors,
             @Value("${app.rate-limit.max-requests:5}") int maxRequests,
-            @Value("${app.rate-limit.window-seconds:60}") int windowSeconds) {
-        this.redis       = redis;
-        this.mapper      = mapper;
-        this.maxRequests = maxRequests;
-        this.window      = Duration.ofSeconds(windowSeconds);
+            @Value("${app.rate-limit.window-seconds:60}") int windowSeconds,
+            @Value("${app.rate-limit.trust-forwarded-for:false}") boolean trustForwardedFor) {
+        this.redis = redis;
+        this.errors = errors;
+        this.window = Duration.ofSeconds(windowSeconds);
+        this.trustForwardedFor = trustForwardedFor;
+        this.limits = Map.of(
+                "/auth/magic-link",                 maxRequests,
+                "/auth/magic-link/verify",          maxRequests * 2,
+                "/auth/webauthn/register/options",  maxRequests * 2,
+                "/auth/webauthn/register/verify",   maxRequests * 2,
+                "/auth/webauthn/login/options",     maxRequests * 2,
+                "/auth/webauthn/login/verify",      maxRequests * 2,
+                "/shop/checkout",                   maxRequests * 2,
+                "/episodes/search",                 maxRequests * 12);
     }
 
     @Override
@@ -49,8 +57,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain chain) throws ServletException, IOException {
         String path = request.getRequestURI().replace(request.getContextPath(), "");
+        Integer limit = limits.get(path);
 
-        if (!PROTECTED.contains(path)) {
+        if (limit == null) {
             chain.doFilter(request, response);
             return;
         }
@@ -63,8 +72,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
             if (count != null && count == 1L) {
                 redis.expire(key, window);
             }
-            if (count != null && count > maxRequests) {
-                reject(response, path);
+            if (count != null && count > limit) {
+                errors.write(response, HttpStatus.TOO_MANY_REQUESTS, "Too Many Requests",
+                        "Trop de tentatives. Veuillez réessayer dans une minute.", "rate-limit-exceeded");
                 return;
             }
         } catch (Exception ignored) {
@@ -74,21 +84,16 @@ public class RateLimitFilter extends OncePerRequestFilter {
         chain.doFilter(request, response);
     }
 
+    /**
+     * N'utilise X-Forwarded-For que si un proxy de confiance en amont est explicitement
+     * configuré (app.rate-limit.trust-forwarded-for=true) — sinon l'en-tête est spoofable
+     * par n'importe quel client et permettrait de contourner la limite de débit.
+     */
     private String resolveIp(HttpServletRequest request) {
-        String xff = request.getHeader("X-Forwarded-For");
-        return (xff != null && !xff.isBlank()) ? xff.split(",")[0].trim() : request.getRemoteAddr();
-    }
-
-    private void reject(HttpServletResponse response, String path) throws IOException {
-        ProblemDetail pd = ProblemDetail.forStatusAndDetail(
-                HttpStatus.TOO_MANY_REQUESTS,
-                "Trop de tentatives. Veuillez réessayer dans une minute.");
-        pd.setTitle("Too Many Requests");
-        pd.setType(URI.create("https://cabanedulys.ca/errors/rate-limit-exceeded"));
-        pd.setProperty("path", path);
-
-        response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
-        response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
-        mapper.writeValue(response.getWriter(), pd);
+        if (trustForwardedFor) {
+            String xff = request.getHeader("X-Forwarded-For");
+            if (xff != null && !xff.isBlank()) return xff.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 }

@@ -1,18 +1,13 @@
 /**
- * Hooks TanStack Query — connexion au backend Spring Boot.
- * Remplace les imports statiques depuis src/data/*.ts
+ * Hooks TanStack Query — source des données serveur (feuille de route, §4).
+ * Convention des clés : [domaine, ...identifiants]. Stale time par nature de donnée :
+ * catalogue 1 min (défaut du QueryClient), recherche 30 s, drop 30 s, compteurs 10 min.
  */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import type { Episode, Guest, Product, DropInfo } from "@/types";
+import type { CheckoutResponse, DropDto, Episode, Guest, OrderStatusDto } from "@/types";
 
-// ---------- types API (miroir des records backend) ----------
-
-export interface DropDto {
-  opensAt: string;
-  open: boolean;
-  products: Product[];
-}
+// ---------- types API sans équivalent domaine ----------
 
 export interface SocialStats {
   listenersTotal: number;
@@ -21,15 +16,10 @@ export interface SocialStats {
   spotifyFollowers: number;
 }
 
-export interface CheckoutResponse {
-  checkoutUrl: string;
-  reference: string;
-}
-
 // ---------- épisodes ----------
 
 export const episodesKey = ["episodes"] as const;
-export const episodeKey = (id: string) => ["episodes", id] as const;
+export const episodeKey = (slug: string) => ["episodes", slug] as const;
 export const episodeSearchKey = (q: string) => ["episodes", "search", q] as const;
 
 export function useEpisodes() {
@@ -39,11 +29,12 @@ export function useEpisodes() {
   });
 }
 
-export function useEpisode(id: string) {
+export function useEpisode(slug: string) {
   return useQuery({
-    queryKey: episodeKey(id),
-    queryFn: () => api.get<Episode>(`/episodes/${id}`),
-    enabled: !!id,
+    queryKey: episodeKey(slug),
+    queryFn: () => api.get<Episode>(`/episodes/${slug}`),
+    enabled: !!slug,
+    retry: false,
   });
 }
 
@@ -59,6 +50,7 @@ export function useEpisodeSearch(q: string) {
 // ---------- invités ----------
 
 export const guestsKey = ["guests"] as const;
+export const guestKey = (slug: string) => ["guests", slug] as const;
 
 export function useGuests() {
   return useQuery({
@@ -67,15 +59,25 @@ export function useGuests() {
   });
 }
 
+export function useGuest(slug: string) {
+  return useQuery({
+    queryKey: guestKey(slug),
+    queryFn: () => api.get<Guest>(`/guests/${slug}`),
+    enabled: !!slug,
+    retry: false,
+  });
+}
+
 // ---------- boutique / drop ----------
 
 export const dropKey = ["shop", "drop"] as const;
+export const orderStatusKey = (id: string) => ["shop", "orders", id, "status"] as const;
 
 export function useDrop() {
   return useQuery({
     queryKey: dropKey,
     queryFn: () => api.get<DropDto>("/shop/drop"),
-    staleTime: 5 * 60_000,
+    staleTime: 30_000,
   });
 }
 
@@ -84,7 +86,18 @@ export function useCheckout() {
   return useMutation({
     mutationFn: (req: { productId: string; quantity: number }) =>
       api.post<CheckoutResponse>("/shop/checkout", req),
-    onSuccess: () => qc.invalidateQueries({ queryKey: dropKey }),
+    onSettled: () => qc.invalidateQueries({ queryKey: dropKey }),
+  });
+}
+
+/** Suivi d'une commande après retour de Stripe : interroge tant que le paiement est en attente. */
+export function useOrderStatus(id: string | null) {
+  return useQuery({
+    queryKey: orderStatusKey(id ?? ""),
+    queryFn: () => api.get<OrderStatusDto>(`/shop/orders/${id}/status`),
+    enabled: !!id,
+    retry: false,
+    refetchInterval: (query) => (query.state.data?.status === "PENDING" ? 2_000 : false),
   });
 }
 

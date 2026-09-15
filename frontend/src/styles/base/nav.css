@@ -1,0 +1,161 @@
+/* ============================================================
+   NAV — Glass Pill flottante (Apple-style)
+============================================================ */
+.nav {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  width: clamp(300px, 90vw, 1040px);
+  border-radius: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px 10px 22px;
+  transition:
+    background 0.5s var(--ease),
+    border-color 0.5s var(--ease),
+    box-shadow 0.5s var(--ease),
+    backdrop-filter 0.5s var(--ease);
+  background: rgba(13, 13, 13, 0);
+  border: 1px solid rgba(255, 255, 255, 0);
+}
+.nav.scrolled {
+  background: rgba(10, 9, 7, 0.82);
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.15),
+    0 20px 60px -20px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(212, 175, 55, 0.04);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand svg {
+  width: 24px;
+  height: 30px;
+  fill: url(#bz);
+}
+.brand .bn {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 1.12rem;
+  letter-spacing: 0.02em;
+}
+.brand .bn small {
+  display: block;
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 0.56rem;
+  letter-spacing: 0.34em;
+  color: var(--bronze);
+  text-transform: uppercase;
+  margin-top: 1px;
+}
+.links {
+  display: flex;
+  gap: 34px;
+  align-items: center;
+}
+.links a {
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: #d7cdbd;
+  position: relative;
+  padding: 4px 0;
+}
+.links a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 1px;
+  width: 0;
+  background: var(--grad-bronze);
+  transition: 0.45s var(--ease);
+}
+.links a:hover {
+  color: #fff;
+}
+.links a:hover::after {
+  width: 100%;
+}
+.nav-cta {
+  padding: 0.78em 1.4em;
+  font-size: 0.74rem;
+}
+.burger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  z-index: 1001;
+}
+.burger span {
+  display: block;
+  width: 26px;
+  height: 1.5px;
+  background: var(--cream);
+  transition: 0.4s var(--ease);
+}
+.burger.open span:nth-child(1) {
+  transform: translateY(6.5px) rotate(45deg);
+}
+.burger.open span:nth-child(2) {
+  opacity: 0;
+}
+.burger.open span:nth-child(3) {
+  transform: translateY(-6.5px) rotate(-45deg);
+}
+
+.mobile-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(8, 7, 5, 0.97);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 9vw;
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path 0.7s var(--ease-2);
+}
+.mobile-menu.open {
+  clip-path: inset(0 0 0 0);
+}
+.mobile-menu a {
+  font-family: var(--serif);
+  font-size: clamp(1.8rem, 8vw, 3rem);
+  font-weight: 300;
+  color: #d7cdbd;
+  padding: 0.18em 0;
+  border-bottom: 1px solid var(--line-soft);
+  transition: 0.4s var(--ease);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.mobile-menu a span {
+  font-family: var(--sans);
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: var(--bronze-3);
+}
+.mobile-menu a:hover {
+  color: var(--gold);
+  padding-left: 12px;
+}
+

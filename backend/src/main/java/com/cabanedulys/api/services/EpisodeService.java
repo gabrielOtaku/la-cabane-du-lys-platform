@@ -4,12 +4,15 @@ import com.cabanedulys.api.dto.EpisodeDto;
 import com.cabanedulys.api.dto.TranscriptLineDto;
 import com.cabanedulys.api.exceptions.NotFoundException;
 import com.cabanedulys.api.models.Episode;
+import com.cabanedulys.api.models.EpisodeStatus;
 import com.cabanedulys.api.repositories.EpisodeRepository;
+import com.cabanedulys.api.util.SlugUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.Collections;
@@ -27,24 +30,50 @@ public class EpisodeService {
         this.mapper = mapper;
     }
 
+    /**
+     * Uniquement les épisodes publiés — un DRAFT en post-production n'apparaît
+     * jamais ici.
+     */
     @Cacheable("episodes")
+    @Transactional(readOnly = true) // les invités sont chargés paresseusement : une session est requise (open-in-view=false)
     public List<EpisodeDto> findAll() {
-        return repo.findAllByOrderByNumberDesc().stream()
+        return repo.findAllByStatusOrderByNumberDesc(EpisodeStatus.PUBLISHED).stream()
                 .map(e -> EpisodeDto.from(e, parseTranscript(e))).toList();
     }
 
-    /** À appeler après toute mutation (création, mise à jour, suppression d'épisode). */
+    /**
+     * À appeler après toute mutation (création, mise à jour, suppression,
+     * publication d'épisode).
+     */
     @CacheEvict(value = "episodes", allEntries = true)
-    public void evictAll() {}
+    public void evictAll() {
+    }
 
-    public EpisodeDto findById(UUID id) {
-        Episode e = repo.findById(id).orElseThrow(() -> new NotFoundException("Épisode introuvable : " + id));
+    /**
+     * Accepte un slug humain ou, en repli, un UUID brut. Ne résout que les épisodes
+     * publiés.
+     */
+    @Transactional(readOnly = true)
+    public EpisodeDto findBySlug(String slug) {
+        Episode e = repo.findBySlugAndStatus(slug, EpisodeStatus.PUBLISHED)
+                .or(() -> SlugUtils.tryParseUuid(slug)
+                        .flatMap(id -> repo.findByIdAndStatus(id, EpisodeStatus.PUBLISHED)))
+                .orElseThrow(() -> new NotFoundException("Épisode introuvable : " + slug));
         return EpisodeDto.from(e, parseTranscript(e));
     }
 
-    /** Recherche plein texte via PostgreSQL tsvector. Retourne [] si le profil dev (H2) est actif. */
+    public EpisodeDto findById(UUID id) {
+        return findBySlug(id.toString());
+    }
+
+    /**
+     * Recherche plein texte via PostgreSQL tsvector. Retourne [] si le profil dev
+     * (H2) est actif.
+     */
+    @Transactional(readOnly = true)
     public List<EpisodeDto> search(String q) {
-        if (!StringUtils.hasText(q)) return List.of();
+        if (!StringUtils.hasText(q))
+            return List.of();
         try {
             return repo.search(q.trim()).stream()
                     .map(e -> EpisodeDto.from(e, parseTranscript(e))).toList();
@@ -54,9 +83,11 @@ public class EpisodeService {
     }
 
     private List<TranscriptLineDto> parseTranscript(Episode e) {
-        if (e.getTranscriptJson() == null || e.getTranscriptJson().isBlank()) return Collections.emptyList();
+        if (e.getTranscriptJson() == null || e.getTranscriptJson().isBlank())
+            return Collections.emptyList();
         try {
-            return mapper.readValue(e.getTranscriptJson(), new TypeReference<List<TranscriptLineDto>>() {});
+            return mapper.readValue(e.getTranscriptJson(), new TypeReference<List<TranscriptLineDto>>() {
+            });
         } catch (Exception ex) {
             return Collections.emptyList();
         }

@@ -114,14 +114,33 @@ export default function EmberField() {
       rafId = requestAnimationFrame(animate);
     };
 
-    // Rendu statique initial, puis boucle complète si mouvement autorisé
-    renderer.render(scene, camera);
-    if (!reduced) {
-      rafId = requestAnimationFrame(animate);
+    // Pause hors écran (audit perf) : onglet caché, ou Hero sorti du viewport quand il existe.
+    let running = false;
+    let heroVisible = true;
+    let tabVisible = document.visibilityState !== "hidden";
+    const start = () => { if (!running && !reduced && heroVisible && tabVisible) { running = true; rafId = requestAnimationFrame(animate); } };
+    const stop  = () => { if (running) { running = false; cancelAnimationFrame(rafId); } };
+    const sync  = () => { if (heroVisible && tabVisible) start(); else stop(); };
+    const onVisibility = () => { tabVisible = document.visibilityState !== "hidden"; sync(); };
+    document.addEventListener("visibilitychange", onVisibility);
+    const hero = document.getElementById("edifice");
+    let io: IntersectionObserver | null = null;
+    if (hero && "IntersectionObserver" in window) {
+      io = new IntersectionObserver((entries) => {
+        heroVisible = entries.some((e) => e.isIntersecting);
+        sync();
+      }, { rootMargin: "120px 0px" });
+      io.observe(hero);
     }
 
+    // Rendu statique initial, puis boucle complète si mouvement autorisé
+    renderer.render(scene, camera);
+    start();
+
     return () => {
-      cancelAnimationFrame(rafId);
+      stop();
+      io?.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("resize", onResize);
       geometry.dispose();

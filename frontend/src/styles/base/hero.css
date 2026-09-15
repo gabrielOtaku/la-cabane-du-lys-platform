@@ -1,0 +1,130 @@
+/* ============================================================
+   HERO / L'ÉDIFICE
+============================================================ */
+.hero {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: 120px;
+  overflow: hidden;
+}
+.hero-lys {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -54%);
+  width: min(135vh, 1100px);
+  height: auto;
+  opacity: 0.05;
+  fill: url(#bz);
+  z-index: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+.hero .container {
+  position: relative;
+  z-index: 2;
+}
+.hero-eyebrow {
+  margin-bottom: 30px;
+}
+.hero h1 {
+  margin-bottom: 30px;
+  max-width: 16ch;
+}
+.hero-sub {
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin-bottom: 46px;
+}
+.hero-actions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.scroll-cue {
+  position: absolute;
+  bottom: 34px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  z-index: 2;
+}
+.scroll-cue span {
+  font-size: 0.62rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--smoke-2);
+}
+.scroll-cue i {
+  width: 1px;
+  height: 46px;
+  background: linear-gradient(var(--bronze), transparent);
+  position: relative;
+  overflow: hidden;
+}
+.scroll-cue i::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 40%;
+  background: var(--gold);
+  animation: cue 2.2s var(--ease-2) infinite;
+}
+@keyframes cue {
+  0% {
+    transform: translateY(-100%);
+  }
+  60%,
+  100% {
+    transform: translateY(280%);
+  }
+}
+
+/* hero stat strip */
+.hero-stats {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-top: 1px solid var(--line-soft);
+  background: linear-gradient(rgba(8, 7, 5, 0), rgba(8, 7, 5, 0.4));
+  z-index: 2;
+}
+.hero-stats .container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+}
+.hstat {
+  padding: 26px 0;
+  border-right: 1px solid var(--line-soft);
+}
+.hstat:last-child {
+  border-right: none;
+}
+.hstat b {
+  font-family: var(--serif);
+  font-size: clamp(1.5rem, 3vw, 2.3rem);
+  font-weight: 400;
+  display: block;
+  background: var(--grad-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.hstat span {
+  font-size: 0.66rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--smoke);
+}
+

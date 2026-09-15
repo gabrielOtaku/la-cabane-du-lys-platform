@@ -1,0 +1,97 @@
+/* ============================================================
+   LA CABANE DU LYS — Luxe Sombre & Immersif
+   Palette officielle (cahier des charges §2.1) :
+   Obsidienne #0d0d0d · Bronze #d4af37 · Ambre #ffaa00 · Anthracite #1a1a1a
+   Typographie injectée via next/font (var --font-serif / --font-sans)
+============================================================ */
+:root {
+  --bg: #0d0d0d;
+  --bg-2: #0f0f0f;
+  --panel: #1a1a1a;
+  --panel-2: #1f1d19;
+  --ink: #0d0d0d;
+
+  --bronze: #d4af37;
+  --bronze-2: #b8932c;
+  --bronze-3: #7e5c30;
+  --gold: #e6bd82;
+  --gold-bright: #f4d29a;
+  --amber: #ffaa00;
+  --ember: #ff6a2b;
+
+  --cream: #efe6d6;
+  --smoke: #a89c8b;
+  --smoke-2: #6e655a;
+  --line: rgba(212, 175, 55, 0.16);
+  --line-soft: rgba(212, 175, 55, 0.08);
+
+  --grad-bronze: linear-gradient(
+    118deg,
+    #f0d79f 0%,
+    #d4af37 38%,
+    #9a7822 72%,
+    #e6c879 100%
+  );
+  --grad-text: linear-gradient(180deg, #f6ead4 0%, #e6bd82 55%, #b07f3f 120%);
+  --grad-ember: linear-gradient(180deg, #ffd27a, #ffaa00 55%, #ff5a2c);
+
+  --serif: var(--font-serif), "Fraunces", Georgia, serif;
+  --sans: var(--font-sans), "Manrope", -apple-system, system-ui, sans-serif;
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-2: cubic-bezier(0.7, 0, 0.2, 1);
+  --maxw: 1240px;
+}
+
+/* ------------------------------------------------------------
+   Tokens V2 (feuille de route, phase 5) — documentés dans docs/DIRECTION_ARTISTIQUE.md
+------------------------------------------------------------ */
+:root {
+  /* Système culturel — matière (Madagascar) : terre rouge profonde, accents chaleureux */
+  --terre: #8a3b1e;
+  --terre-2: #5c2612;
+  /* Système culturel — territoire (Québec) : brume, lumière hivernale */
+  --brume: rgba(214, 222, 230, 0.06);
+  --hiver: #dfe6ee;
+
+  /* Espace */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 18px;
+  --space-5: 28px;
+  --space-6: 44px;
+  --space-7: 72px;
+
+  /* Rayons */
+  --radius-s: 3px;
+  --radius-m: 8px;
+  --radius-l: 18px;
+  --radius-pill: 100px;
+
+  /* Ombres et verre fumé (règles visuelles §3) */
+  --glass-bg: rgba(15, 13, 10, 0.62);
+  --glass-blur: 24px;
+  --glass-border: rgba(212, 175, 55, 0.22);
+  --shadow-soft: 0 24px 60px -20px rgba(0, 0, 0, 0.75);
+  --shadow-glow: 0 16px 40px -10px rgba(255, 150, 60, 0.6);
+
+  /* Mouvement — trois familles : braise, luciole, gravure & dorure */
+  --motion-fast: 160ms;      /* survols, retours courts */
+  --motion-standard: 280ms;  /* ouverture de contrôles, transitions courantes */
+  --motion-organic: 600ms;   /* lucioles et braises (400 à 800 ms) */
+  --motion-engrave: 900ms;   /* gravure : tracé d'une ligne, révélation typographique */
+  --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
+  --glow-low: 0.35;
+  --glow-active: 0.9;
+
+  /* Couches */
+  --z-base: 0;
+  --z-content: 3;
+  --z-nav: 1000;
+  --z-mini-player: 1200;
+  --z-loader: 9000;
+  --z-toast: 9500;
+  --z-cursor: 9999;
+  --z-fireflies: 10001;
+}

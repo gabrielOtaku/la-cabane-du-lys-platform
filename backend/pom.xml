@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.2.5</version>
+    <version>3.5.16</version>
     <relativePath/>
   </parent>
 
@@ -19,8 +19,15 @@
 
   <properties>
     <java.version>21</java.version>
-    <jjwt.version>0.12.5</jjwt.version>
-    <stripe.version>25.12.0</stripe.version>
+    <jjwt.version>0.13.0</jjwt.version>
+    <stripe.version>33.4.2</stripe.version>
+    <!-- Correctifs de sécurité au-dessus des versions gérées par Spring Boot 3.5.16 (Docker Scout, 2026-09-14) ; à retirer quand Boot les rattrape -->
+    <tomcat.version>10.1.59</tomcat.version>
+    <netty.version>4.1.138.Final</netty.version>
+    <postgresql.version>42.7.13</postgresql.version>
+    <!-- Jackson 2.22 : WebAuthn4J 0.31 (Jackson 3 interne) exige jackson-annotations >= 2.22 -->
+    <jackson-bom.version>2.22.2</jackson-bom.version>
+    <log4j2.version>2.25.5</log4j2.version>
   </properties>
 
   <dependencies>
@@ -37,6 +44,7 @@
     <!-- Persistance : JPA + PostgreSQL + Flyway -->
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-data-jpa</artifactId></dependency>
     <dependency><groupId>org.flywaydb</groupId><artifactId>flyway-core</artifactId></dependency>
+    <dependency><groupId>org.flywaydb</groupId><artifactId>flyway-database-postgresql</artifactId></dependency>
     <dependency><groupId>org.postgresql</groupId><artifactId>postgresql</artifactId><scope>runtime</scope></dependency>
 
     <!-- Cache : Redis -->
@@ -45,8 +53,11 @@
     <!-- Paiement : Stripe (boutique capsule) -->
     <dependency><groupId>com.stripe</groupId><artifactId>stripe-java</artifactId><version>${stripe.version}</version></dependency>
 
+    <!-- Courriel : envoi du lien magique (SMTP) — mode « log » sans serveur en dev -->
+    <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-mail</artifactId></dependency>
+
     <!-- WebAuthn : vérification cryptographique attestation/assertion -->
-    <dependency><groupId>com.webauthn4j</groupId><artifactId>webauthn4j-core</artifactId><version>0.22.2.RELEASE</version></dependency>
+    <dependency><groupId>com.webauthn4j</groupId><artifactId>webauthn4j-core</artifactId><version>0.31.10.RELEASE</version></dependency>
 
     <!-- Confort -->
     <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><optional>true</optional></dependency>
@@ -63,12 +74,14 @@
     <dependency>
       <groupId>net.logstash.logback</groupId>
       <artifactId>logstash-logback-encoder</artifactId>
-      <version>7.4</version>
+      <version>9.0</version>
     </dependency>
 
     <!-- Tests unitaires -->
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
     <dependency><groupId>org.springframework.security</groupId><artifactId>spring-security-test</artifactId><scope>test</scope></dependency>
+    <!-- Émulateur d'authentificateur WebAuthn (tests du flux passkey sans navigateur) -->
+    <dependency><groupId>com.webauthn4j</groupId><artifactId>webauthn4j-test</artifactId><version>0.31.10.RELEASE</version><scope>test</scope></dependency>
 
     <!-- Tests d'intégration haute-fidélité : vrais conteneurs Docker PostgreSQL + Redis -->
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-testcontainers</artifactId><scope>test</scope></dependency>

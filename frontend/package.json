@@ -2,7 +2,7 @@
   "name": "cabane-du-lys-frontend",
   "version": "1.0.0",
   "private": true,
-  "description": "La Cabane du Lys — front-end immersif (Next.js 14 / R3F).",
+  "description": "La Cabane du Lys — front-end immersif (Next.js 15 / R3F).",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -13,29 +13,33 @@
   "dependencies": {
     "@react-three/drei": "^9.122.0",
     "@react-three/fiber": "8.16.8",
-    "@tanstack/react-query": "5.51.1",
-    "clsx": "2.1.1",
-    "framer-motion": "11.3.8",
-    "lenis": "1.1.6",
-    "lucide-react": "0.408.0",
-    "next": "15.5.19",
+    "@tanstack/react-query": "^5.102.8",
+    "framer-motion": "^11.18.2",
+    "lenis": "^1.3.26",
+    "lucide-react": "^1.46.0",
+    "next": "^15.5.25",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "tailwind-merge": "2.4.0",
     "three": "0.166.1",
-    "zustand": "4.5.4"
+    "zustand": "^4.5.7"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.3.1",
-    "@types/node": "20.14.10",
-    "@types/react": "18.3.3",
-    "@types/react-dom": "18.3.0",
-    "@types/three": "0.166.0",
-    "autoprefixer": "10.4.19",
-    "eslint": "^9.0.0",
-    "eslint-config-next": "^15.5.19",
-    "postcss": "^8.5.15",
-    "tailwindcss": "3.4.6",
-    "typescript": "5.5.3"
+    "@eslint/eslintrc": "^3.3.7",
+    "@types/node": "^22.20.2",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@types/three": "^0.166.0",
+    "autoprefixer": "^10.6.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^15.5.25",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "postcss": "$postcss",
+    "three-stdlib": {
+      "fflate": "^0.8.3"
+    }
   }
 }

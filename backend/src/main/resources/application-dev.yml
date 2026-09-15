@@ -1,6 +1,7 @@
 # ============================================================
 #  Profil DEV — Lancer sans Docker : mvn spring-boot:run -Dspring-boot.run.profiles=dev
 #  Base H2 en mémoire (schéma créé par JPA), Redis toléré absent.
+#  Sans Redis : rate limiting et révocation de session en fail-open, passkeys indisponibles.
 # ============================================================
 spring:
   datasource:
@@ -9,7 +10,6 @@ spring:
     username: sa
     password: ''
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: create-drop
     show-sql: false
@@ -28,6 +28,22 @@ spring:
       timeout: 200ms
   cache:
     type: simple
+
+app:
+  session:
+    cookie-secure: false     # http://localhost — le cookie serait ignoré avec Secure
+  mail:
+    mode: log                # le lien magique est écrit dans la console
+  features:
+    magic-link-enabled: true
+
+# Observabilité : les identifiants de trace restent dans les logs, mais rien n'est envoyé à Zipkin.
+# Sans ce réglage, chaque export échoue en boucle sur localhost:9411 (Zipkin n'est pas lancé en local).
+management:
+  zipkin:
+    tracing:
+      export:
+        enabled: false
 
 logging:
   level:

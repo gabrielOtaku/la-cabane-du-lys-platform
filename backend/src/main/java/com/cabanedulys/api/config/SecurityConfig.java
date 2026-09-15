@@ -1,38 +1,49 @@
 package com.cabanedulys.api.config;
 
+import com.cabanedulys.api.security.ApiSecurityErrors;
 import com.cabanedulys.api.security.JwtAuthenticationFilter;
 import com.cabanedulys.api.security.RateLimitFilter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /**
- * Configuration de sécurité « Zero Trust » (cahier des charges §4).
- * API stateless protégée par JWT ; endpoints publics explicitement listés.
- * RateLimitFilter appliqué en amont du filtre JWT sur les routes sensibles.
+ * Configuration de sécurité de l'API.
+ *
+ * <ul>
+ *   <li>Session portée par un cookie HttpOnly (JWT signé) ; l'API reste sans état côté serveur.</li>
+ *   <li>CSRF : SameSite=Lax + vérification de l'origine dans {@link JwtAuthenticationFilter}
+ *       (la protection CSRF par jeton de Spring est inutile sans session serveur).</li>
+ *   <li>Routes publiques listées explicitement ; {@code /admin/**} exige le rôle ADMIN ;
+ *       tout le reste exige une session.</li>
+ *   <li>401 / 403 rendus en JSON (RFC 7807) par {@link ApiSecurityErrors}.</li>
+ * </ul>
  */
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
     private final RateLimitFilter rateLimitFilter;
     private final UrlBasedCorsConfigurationSource corsSource;
+    private final ApiSecurityErrors errors;
 
     public SecurityConfig(JwtAuthenticationFilter jwtFilter,
                           RateLimitFilter rateLimitFilter,
-                          UrlBasedCorsConfigurationSource corsSource) {
+                          UrlBasedCorsConfigurationSource corsSource,
+                          ApiSecurityErrors errors) {
         this.jwtFilter       = jwtFilter;
         this.rateLimitFilter = rateLimitFilter;
         this.corsSource      = corsSource;
+        this.errors          = errors;
     }
 
     @Bean
@@ -41,21 +52,32 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsSource))
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .exceptionHandling(e -> e
+                .authenticationEntryPoint(errors)
+                .accessDeniedHandler(errors))
             .authorizeHttpRequests(auth -> auth
+                // Session courante : lecture, fermeture, ajout d'une passkey (compte déjà vérifié)
+                .requestMatchers("/auth/me", "/auth/logout", "/auth/webauthn/register/**").authenticated()
+                // Entrée : lien magique et connexion par passkey
                 .requestMatchers("/auth/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/episodes/**", "/guests/**", "/shop/drop", "/stats/social").permitAll()
+                // Back office
+                .requestMatchers("/admin/**").hasRole("ADMIN")
+                // Contenu public
+                .requestMatchers(HttpMethod.GET,
+                        "/episodes/**", "/guests/**", "/shop/drop", "/shop/orders/*/status", "/stats/social").permitAll()
                 .requestMatchers("/shop/webhook").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 .anyRequest().authenticated()
             )
-            .addFilterBefore(rateLimitFilter, JwtAuthenticationFilter.class)
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+            // Ordre d'enregistrement important : un filtre ne peut être placé « avant » qu'un filtre déjà enregistré.
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(rateLimitFilter, JwtAuthenticationFilter.class);
         return http.build();
     }
 
     /**
-     * Désactive l'enregistrement automatique de RateLimitFilter comme servlet filter.
-     * Il est ajouté manuellement à la chaîne de sécurité Spring ci-dessus.
+     * Désactive l'enregistrement automatique des filtres comme servlet filters :
+     * ils sont ajoutés manuellement à la chaîne Spring Security ci-dessus.
      */
     @Bean
     public FilterRegistrationBean<RateLimitFilter> rateLimitRegistration() {
@@ -65,7 +87,9 @@ public class SecurityConfig {
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    public FilterRegistrationBean<JwtAuthenticationFilter> jwtRegistration() {
+        FilterRegistrationBean<JwtAuthenticationFilter> reg = new FilterRegistrationBean<>(jwtFilter);
+        reg.setEnabled(false);
+        return reg;
     }
 }

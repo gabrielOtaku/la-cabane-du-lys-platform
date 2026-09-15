@@ -1,0 +1,63 @@
+/* ============================================================
+   MANIFESTE
+============================================================ */
+.manifeste {
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(20, 15, 8, 0.5),
+    transparent
+  );
+}
+.manifeste-grid {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: clamp(40px, 7vw, 110px);
+  align-items: center;
+}
+.quote {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(1.7rem, 3.6vw, 3rem);
+  line-height: 1.18;
+  letter-spacing: -0.02em;
+}
+.quote em {
+  font-style: italic;
+  background: var(--grad-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.quote .mark {
+  font-size: 3em;
+  line-height: 0;
+  color: var(--bronze-3);
+  vertical-align: -0.35em;
+  margin-right: 0.06em;
+}
+.manifeste-col p {
+  margin-bottom: 1.3em;
+  color: #cdc3b3;
+  font-weight: 350;
+}
+.manifeste-col p:last-child {
+  margin-bottom: 0;
+}
+.tagchips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 30px;
+}
+.chip {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--bronze);
+  padding: 0.55em 1.1em;
+  border: 1px solid var(--line);
+  border-radius: 40px;
+  background: rgba(196, 154, 94, 0.04);
+}
+

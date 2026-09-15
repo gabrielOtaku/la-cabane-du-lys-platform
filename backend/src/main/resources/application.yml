@@ -25,6 +25,14 @@ spring:
   mvc:
     problemdetails:
       enabled: true   # RFC 7807 — réponses d'erreur standardisées
+  mail:                          # Utilisé uniquement si app.mail.mode=smtp
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USER:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
 
 server:
   port: 8080
@@ -36,10 +44,20 @@ server:
 # Paramètres applicatifs
 app:
   cors:
-    allowed-origin: ${CORS_ORIGIN:http://localhost:3000}
+    allowed-origin: ${CORS_ORIGIN:http://localhost:3000}   # plusieurs origines : séparer par des virgules
   jwt:
     secret: ${JWT_SECRET:dev-secret-please-override-with-a-strong-32-bytes-minimum-key}
     expiration-minutes: 120
+  session:
+    cookie-name: cdl_session
+    cookie-secure: ${SESSION_COOKIE_SECURE:true}          # false uniquement en dev (http://localhost)
+    cookie-domain: ${SESSION_COOKIE_DOMAIN:}              # vide = domaine de l'API
+  auth:
+    magic-link:
+      ttl-minutes: ${MAGIC_LINK_TTL_MINUTES:15}
+  mail:
+    mode: ${MAIL_MODE:log}                                # log (dev) | smtp (prod)
+    from: ${MAIL_FROM:La Cabane du Lys <no-reply@cabanedulys.ca>}
   webauthn:
     rp-id: ${WEBAUTHN_RP_ID:localhost}
     rp-name: "La Cabane du Lys"
@@ -47,10 +65,15 @@ app:
   stripe:
     secret-key: ${STRIPE_SECRET_KEY:sk_test_replace_me}
     webhook-secret: ${STRIPE_WEBHOOK_SECRET:whsec_replace_me}
+  shop:
+    stock-hold-minutes: ${STOCK_HOLD_MINUTES:30}          # minimum imposé par Stripe Checkout : 30
   base-url: ${BASE_URL:http://localhost:3000}
   rate-limit:
-    max-requests: 5       # requêtes max par fenêtre par IP
+    max-requests: 5       # requêtes max par fenêtre par IP (lien magique) ; autres routes en multiples
     window-seconds: 60    # durée de la fenêtre en secondes
+    trust-forwarded-for: ${TRUST_FORWARDED_FOR:false}   # true uniquement derrière un proxy de confiance qui nettoie l'en-tête
+  features:
+    magic-link-enabled: ${MAGIC_LINK_ENABLED:true}       # interrupteur d'urgence
 
 logging:
   level:
@@ -68,6 +91,9 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+  health:
+    mail:
+      enabled: ${MAIL_HEALTH_ENABLED:false}   # activer uniquement avec un SMTP configuré
 
 ---
 # Profil exécuté dans Docker Compose

@@ -4,14 +4,15 @@ import com.cabanedulys.api.models.Guest;
 import java.util.UUID;
 
 public record GuestDto(
-        UUID id, String name, String role, String company, String sector,
-        String revenue, int employees, String quote, String lesson
+        UUID id, String slug, String name, String role, String company, String companyUrl,
+        String city, String region, String category, String angle, String bio,
+        String photoUrl, String quote, boolean featured
 ) {
     public static GuestDto from(Guest g) {
         return new GuestDto(
-                g.getId(), g.getName(), g.getRole(), g.getCompany(),
-                g.getSector() == null ? null : g.getSector().name().toLowerCase(),
-                g.getRevenue(), g.getEmployees(), g.getQuote(), g.getLesson()
+                g.getId(), g.getSlug(), g.getName(), g.getRole(), g.getCompany(), g.getCompanyUrl(),
+                g.getCity(), g.getRegion(), g.getCategory(), g.getAngle(), g.getBio(),
+                g.getPhotoUrl(), g.getQuote(), g.isFeatured()
         );
     }
 }

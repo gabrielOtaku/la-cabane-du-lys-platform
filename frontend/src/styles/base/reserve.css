@@ -1,0 +1,160 @@
+/* ============================================================
+   LA RÉSERVE — drop / boutique scellée
+============================================================ */
+.reserve {
+  text-align: center;
+  overflow: hidden;
+}
+.reserve .seal {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  border: 1px solid var(--bronze);
+  display: grid;
+  place-items: center;
+  margin: 0 auto 28px;
+  position: relative;
+  animation: spin 36s linear infinite;
+}
+.reserve .seal svg {
+  width: 40px;
+  height: 50px;
+  fill: url(#bz);
+}
+.reserve .seal::after {
+  content: "· LA RÉSERVE · ÉDITION SCELLÉE ";
+  position: absolute;
+  inset: -26px;
+  font-size: 0.5rem;
+  letter-spacing: 0.28em;
+  color: var(--bronze-3);
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.countdown {
+  display: flex;
+  justify-content: center;
+  gap: clamp(14px, 3vw, 40px);
+  margin: 40px 0 12px;
+}
+.cd-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.cd-unit b {
+  font-family: var(--serif);
+  font-size: clamp(2.4rem, 7vw, 5rem);
+  font-weight: 330;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  background: var(--grad-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.cd-unit span {
+  font-size: 0.62rem;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--smoke);
+}
+.cd-sep {
+  font-family: var(--serif);
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  color: var(--bronze-3);
+  align-self: flex-start;
+  margin-top: 0.1em;
+}
+.veil-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin: 50px 0 36px;
+}
+.veil {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  aspect-ratio: 4/5;
+  overflow: hidden;
+  background: linear-gradient(
+    160deg,
+    rgba(24, 18, 10, 0.6),
+    rgba(10, 8, 6, 0.4)
+  );
+  display: grid;
+  place-items: center;
+}
+.veil .lock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  filter: blur(0.3px);
+}
+.veil .lock svg {
+  width: 30px;
+  height: 30px;
+  stroke: var(--bronze-3);
+  fill: none;
+}
+.veil .lock span {
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--smoke-2);
+}
+.veil .px {
+  position: absolute;
+  bottom: 18px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--bronze-3);
+  font-size: 0.95rem;
+}
+.veil .relic-mini {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  opacity: 0.16;
+  filter: blur(7px);
+}
+.veil .relic-mini svg {
+  width: 90px;
+  height: 90px;
+  stroke: var(--gold);
+  fill: none;
+}
+.notify {
+  display: flex;
+  gap: 10px;
+  max-width: 480px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.notify input {
+  flex: 1;
+  min-width: 220px;
+  background: rgba(196, 154, 94, 0.04);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 1.05em 1.2em;
+  color: var(--cream);
+  font-family: var(--sans);
+  font-size: 0.92rem;
+}
+.notify input:focus {
+  outline: none;
+  border-color: rgba(227, 184, 120, 0.6);
+}
+

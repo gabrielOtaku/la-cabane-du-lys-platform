@@ -1,20 +1,55 @@
 "use client";
 import { useCallback, useState } from "react";
-import { api } from "@/lib/api";
+import { useQueryClient } from "@tanstack/react-query";
+import { api, isApiError } from "@/lib/api";
+import { sessionKey } from "@/lib/auth";
+import type { Session } from "@/types";
 
 /**
- * Authentification sans mot de passe (WebAuthn / Passkeys).
- * Le navigateur réalise la ceremony ; le backend Spring Boot fournit
- * les options (challenge) et vérifie l'attestation/assertion.
+ * Passkeys (WebAuthn) — méthode complémentaire au lien magique.
  *
- * Endpoints attendus côté API :
- *   POST /auth/webauthn/register/options   -> PublicKeyCredentialCreationOptions
- *   POST /auth/webauthn/register/verify    -> { token }
- *   POST /auth/webauthn/login/options      -> PublicKeyCredentialRequestOptions
- *   POST /auth/webauthn/login/verify       -> { token }
+ *  - register() : ajoute une passkey au compte de la session ouverte (adresse déjà vérifiée).
+ *  - login()    : connexion sans courriel ; l'appareil propose la passkey enregistrée.
+ *
+ * Endpoints :
+ *   POST /auth/webauthn/register/options  (session requise) -> options + challengeId
+ *   POST /auth/webauthn/register/verify   (session requise) -> Session
+ *   POST /auth/webauthn/login/options                       -> options + challengeId
+ *   POST /auth/webauthn/login/verify                        -> Session (cookie posé par l'API)
  */
 
 type Status = "idle" | "pending" | "success" | "error" | "unsupported";
+
+interface RawCredentialDescriptor { type: string; id: string; }
+interface RegistrationOptionsRaw {
+  challengeId: string;
+  challenge: string;
+  rp: { id: string; name: string };
+  user: { id: string; name: string; displayName: string };
+  pubKeyCredParams: { type: string; alg: number }[];
+  timeout: number;
+  attestation: string;
+  authenticatorSelection: Record<string, string>;
+  excludeCredentials?: RawCredentialDescriptor[];
+}
+interface LoginOptionsRaw {
+  challengeId: string;
+  challenge: string;
+  rpId: string;
+  allowCredentials?: RawCredentialDescriptor[];
+  userVerification: string;
+  timeout: number;
+}
+
+function describe(e: unknown, fallback: string): string {
+  if (isApiError(e)) return e.message;
+  if (e instanceof DOMException) {
+    if (e.name === "NotAllowedError") return "Opération annulée ou refusée par l'appareil.";
+    if (e.name === "InvalidStateError") return "Cet appareil possède déjà une passkey pour ce compte.";
+    if (e.name === "SecurityError") return "Le domaine du site ne correspond pas à la configuration des passkeys.";
+  }
+  return e instanceof Error ? e.message : fallback;
+}
 
 const b64urlToBuf = (s: string) =>
   Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
@@ -23,6 +58,7 @@ const bufToB64url = (b: ArrayBuffer) =>
     .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 
 export function useWebAuthn() {
+  const qc = useQueryClient();
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -31,22 +67,24 @@ export function useWebAuthn() {
     !!window.PublicKeyCredential &&
     !!navigator.credentials?.create;
 
-  const register = useCallback(async (email: string) => {
-    if (!supported) { setStatus("unsupported"); return null; }
+  /** Ajoute une passkey au compte courant. Retourne true si l'appareil est enregistré. */
+  const register = useCallback(async (): Promise<boolean> => {
+    if (!supported) { setStatus("unsupported"); return false; }
     setStatus("pending"); setError(null);
     try {
-      // 1) options serveur
-      const opts: any = await api.post("/auth/webauthn/register/options", { email });
-      opts.challenge = b64urlToBuf(opts.challenge);
-      opts.user.id = b64urlToBuf(opts.user.id);
+      const raw = await api.post<RegistrationOptionsRaw>("/auth/webauthn/register/options");
+      const publicKey = {
+        ...raw,
+        challenge: b64urlToBuf(raw.challenge),
+        user: { ...raw.user, id: b64urlToBuf(raw.user.id) },
+        excludeCredentials: raw.excludeCredentials?.map((c) => ({ type: "public-key" as const, id: b64urlToBuf(c.id) })),
+      } as unknown as PublicKeyCredentialCreationOptions;
 
-      // 2) ceremony navigateur (FaceID / TouchID / clé physique)
-      const cred = (await navigator.credentials.create({ publicKey: opts })) as PublicKeyCredential;
+      const cred = (await navigator.credentials.create({ publicKey })) as PublicKeyCredential;
       const r = cred.response as AuthenticatorAttestationResponse;
 
-      // 3) vérification serveur
-      const { token } = await api.post<{ token: string }>("/auth/webauthn/register/verify", {
-        email,
+      await api.post<Session>("/auth/webauthn/register/verify", {
+        challengeId: raw.challengeId,
         id: cred.id,
         rawId: bufToB64url(cred.rawId),
         type: cred.type,
@@ -56,27 +94,29 @@ export function useWebAuthn() {
         },
       });
       setStatus("success");
-      return token;
-    } catch (e: any) {
+      return true;
+    } catch (e) {
       setStatus("error");
-      setError(e?.message ?? "Échec de l'enregistrement biométrique.");
-      return null;
+      setError(describe(e, "Échec de l'enregistrement de la passkey."));
+      return false;
     }
   }, [supported]);
 
-  const login = useCallback(async (email: string) => {
+  /** Connexion par passkey. Retourne la session ouverte, ou null. */
+  const login = useCallback(async (): Promise<Session | null> => {
     if (!supported) { setStatus("unsupported"); return null; }
     setStatus("pending"); setError(null);
     try {
-      const opts: any = await api.post("/auth/webauthn/login/options", { email });
-      opts.challenge = b64urlToBuf(opts.challenge);
-      if (opts.allowCredentials) {
-        opts.allowCredentials = opts.allowCredentials.map((c: any) => ({ ...c, id: b64urlToBuf(c.id) }));
-      }
-      const assertion = (await navigator.credentials.get({ publicKey: opts })) as PublicKeyCredential;
+      const raw = await api.post<LoginOptionsRaw>("/auth/webauthn/login/options");
+      const publicKey = {
+        ...raw,
+        challenge: b64urlToBuf(raw.challenge),
+        allowCredentials: raw.allowCredentials?.map((c) => ({ type: "public-key" as const, id: b64urlToBuf(c.id) })),
+      } as unknown as PublicKeyCredentialRequestOptions;
+      const assertion = (await navigator.credentials.get({ publicKey })) as PublicKeyCredential;
       const r = assertion.response as AuthenticatorAssertionResponse;
-      const { token } = await api.post<{ token: string }>("/auth/webauthn/login/verify", {
-        email,
+      const session = await api.post<Session>("/auth/webauthn/login/verify", {
+        challengeId: raw.challengeId,
         id: assertion.id,
         rawId: bufToB64url(assertion.rawId),
         type: assertion.type,
@@ -87,14 +127,15 @@ export function useWebAuthn() {
           userHandle: r.userHandle ? bufToB64url(r.userHandle) : null,
         },
       });
+      qc.setQueryData(sessionKey, session);
       setStatus("success");
-      return token;
-    } catch (e: any) {
+      return session;
+    } catch (e) {
       setStatus("error");
-      setError(e?.message ?? "Échec de l'authentification.");
+      setError(describe(e, "Échec de la connexion par passkey."));
       return null;
     }
-  }, [supported]);
+  }, [supported, qc]);
 
   return { supported, status, error, register, login };
 }
